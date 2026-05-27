@@ -1,4 +1,5 @@
-// Catch-all handler for /api/* routes
+// _worker.js — Cloudflare Pages Advanced Mode Worker
+// 攔截所有請求：/api/* 走 API 邏輯，其餘服務靜態資源
 
 const ALLOWED_ORIGINS = ['https://glass-smash.pages.dev'];
 
@@ -32,7 +33,6 @@ async function sha256hex(str) {
 
 const NAME_RE = /^[一-鿿぀-ヿ가-힯a-zA-Z0-9 _\-!?~^*#@%&+.]+$/u;
 
-// ── POST /api/scores ──────────────────────────────────────
 async function handlePostScores(request, env) {
   let body;
   try { body = await request.json(); }
@@ -42,10 +42,8 @@ async function handlePostScores(request, env) {
 
   if (typeof name !== 'string' || name.trim().length < 1 || name.trim().length > 20 || !NAME_RE.test(name.trim()))
     return json({ ok: false, error: 'Invalid name' }, 400);
-
   if (typeof score !== 'number' || !Number.isInteger(score) || score < 1 || score > 9_999_999)
     return json({ ok: false, error: 'Invalid score' }, 400);
-
   if (typeof round !== 'number' || !Number.isInteger(round) || round < 1 || round > 9999)
     return json({ ok: false, error: 'Invalid round' }, 400);
 
@@ -72,51 +70,50 @@ async function handlePostScores(request, env) {
   return json({ ok: true, rank: rankResult?.rank ?? 1 });
 }
 
-// ── GET /api/scores/top ───────────────────────────────────
 async function handleGetTop(env) {
   const result = await env.DB.prepare(
     'SELECT name, score, round FROM scores ORDER BY score DESC LIMIT 10'
   ).all();
-  return json(
-    { ok: true, data: result.results ?? [] },
-    200,
-    { 'Cache-Control': 'public, max-age=30' }
-  );
+  return json({ ok: true, data: result.results ?? [] }, 200, { 'Cache-Control': 'public, max-age=30' });
 }
 
-// ── GET /api/ping ─────────────────────────────────────────
-function handlePing() {
-  return json({ ok: true, message: 'pong', ts: Date.now() });
-}
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method;
+    const origin = request.headers.get('Origin') || '';
 
-// ── Main dispatcher ───────────────────────────────────────
-export async function onRequest({ request, env, params }) {
-  const origin = request.headers.get('Origin') || '';
-  const method = request.method;
-  const route = (params.route || []).join('/'); // e.g. "scores", "scores/top", "ping"
+    // ── API 路由 ──────────────────────────────────
+    if (path.startsWith('/api/')) {
 
-  // CORS preflight
-  if (method === 'OPTIONS') {
-    if (!isAllowedOrigin(origin)) return new Response(null, { status: 403 });
-    return new Response(null, { status: 204, headers: corsHeaders(origin) });
-  }
+      // CORS preflight
+      if (method === 'OPTIONS') {
+        if (!isAllowedOrigin(origin)) return new Response(null, { status: 403 });
+        return new Response(null, { status: 204, headers: corsHeaders(origin) });
+      }
 
-  if (!isAllowedOrigin(origin)) return json({ ok: false, error: 'Forbidden' }, 403);
-  const cors = corsHeaders(origin);
+      if (!isAllowedOrigin(origin)) return json({ ok: false, error: 'Forbidden' }, 403);
+      const cors = corsHeaders(origin);
 
-  let res;
-  if (route === 'ping' && method === 'GET') {
-    res = handlePing();
-  } else if (route === 'scores' && method === 'POST') {
-    res = await handlePostScores(request, env);
-  } else if (route === 'scores/top' && method === 'GET') {
-    res = await handleGetTop(env);
-  } else {
-    res = json({ ok: false, error: 'Not found' }, 404);
-  }
+      let res;
+      if (path === '/api/ping' && method === 'GET') {
+        res = json({ ok: true, message: 'pong', ts: Date.now() });
+      } else if (path === '/api/scores' && method === 'POST') {
+        res = await handlePostScores(request, env);
+      } else if (path === '/api/scores/top' && method === 'GET') {
+        res = await handleGetTop(env);
+      } else {
+        res = json({ ok: false, error: 'Not found' }, 404);
+      }
 
-  // 把 CORS headers 加到所有回應
-  const headers = new Headers(res.headers);
-  Object.entries(cors).forEach(([k, v]) => headers.set(k, v));
-  return new Response(res.body, { status: res.status, headers });
-}
+      const headers = new Headers(res.headers);
+      Object.entries(cors).forEach(([k, v]) => headers.set(k, v));
+      headers.set('Cache-Control', 'no-store');
+      return new Response(res.body, { status: res.status, headers });
+    }
+
+    // ── 靜態資源（交回 Pages 處理）───────────────
+    return env.ASSETS.fetch(request);
+  },
+};
