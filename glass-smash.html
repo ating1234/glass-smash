@@ -7,6 +7,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="砸玻璃">
 <meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png">
+<meta name="theme-color" content="#111111">
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token":"REPLACE_WITH_YOUR_TOKEN"}'></script>
 <title>砸玻璃大挑戰</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -33,6 +38,36 @@ canvas{display:block;width:100%;height:100%}
 #msgbox p{font-size:15px;margin-bottom:16px;color:#ccc;white-space:pre-line;line-height:1.6}
 #msgbox button{padding:10px 32px;font-size:16px;border:none;border-radius:10px;background:#27ae60;color:#fff;cursor:pointer;margin:4px}
 #msgbox button:hover{background:#1e8449}
+#msgbox button.lb-btn{background:linear-gradient(135deg,#2980b9,#1a5276)}
+#msgbox button.lb-btn:hover{background:linear-gradient(135deg,#1a5276,#0d2b4a)}
+
+/* ===== NICKNAME MODAL ===== */
+#nickname-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+#nickname-modal.hidden{display:none}
+#nickname-box{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-radius:22px;padding:34px 40px;color:#fff;text-align:center;max-width:90vw;width:320px;box-shadow:0 8px 48px rgba(0,0,0,0.6)}
+#nickname-box h2{font-size:22px;margin-bottom:8px}
+#nickname-box p{color:#aaa;font-size:13px;margin-bottom:18px;line-height:1.5}
+#nickname-input{width:100%;padding:10px 14px;font-size:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:#fff;outline:none;margin-bottom:14px;font-family:inherit}
+#nickname-input::placeholder{color:#666}
+#nickname-input:focus{border-color:rgba(100,200,255,0.5);box-shadow:0 0 0 2px rgba(100,200,255,0.15)}
+
+/* ===== LEADERBOARD MODAL ===== */
+#lb-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+#lb-modal.hidden{display:none}
+#lb-box{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border-radius:22px;padding:28px 28px 24px;color:#fff;text-align:center;max-width:92vw;width:380px;box-shadow:0 12px 60px rgba(0,0,0,0.65)}
+#lb-box h2{font-size:22px;margin-bottom:4px;letter-spacing:1px}
+#lb-status{color:#aaa;font-size:13px;margin-bottom:14px;min-height:18px}
+#lb-list{list-style:none;margin-bottom:18px;text-align:left}
+#lb-list li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;font-size:14px;margin-bottom:5px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04)}
+#lb-list li.top-1{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.28)}
+#lb-list li.top-2{background:rgba(192,192,192,0.08);border-color:rgba(192,192,192,0.22)}
+#lb-list li.top-3{background:rgba(205,127,50,0.09);border-color:rgba(205,127,50,0.22)}
+.lb-rank{width:26px;text-align:center;font-size:17px;flex-shrink:0}
+.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e0e0e0}
+.lb-score{font-weight:bold;color:#7df;font-size:15px;flex-shrink:0}
+.lb-round{color:#888;font-size:11px;margin-left:4px;flex-shrink:0}
+#lb-close-btn,#nickname-confirm-btn{padding:10px 30px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;cursor:pointer;margin:4px;font-family:inherit}
+#lb-close-btn:hover,#nickname-confirm-btn:hover{background:linear-gradient(135deg,#27ae60,#1e8449)}
 </style>
 </head>
 <body>
@@ -52,6 +87,26 @@ canvas{display:block;width:100%;height:100%}
   <div id="item-toast"></div>
   <div id="tool-bar">🪨 點擊砸玻璃</div>
   <div id="msgbox"><h2 id="mt"></h2><p id="mp"></p><div id="mb"></div></div>
+</div>
+
+<!-- 暱稱輸入 Modal -->
+<div id="nickname-modal" class="hidden">
+  <div id="nickname-box">
+    <h2>👤 輸入你的暱稱</h2>
+    <p>用來顯示在全球排行榜<br>最多 20 個字</p>
+    <input id="nickname-input" type="text" maxlength="20" placeholder="你的暱稱...">
+    <button id="nickname-confirm-btn">確認 ✓</button>
+  </div>
+</div>
+
+<!-- 排行榜 Modal -->
+<div id="lb-modal" class="hidden">
+  <div id="lb-box">
+    <h2>🏆 全球排行榜</h2>
+    <p id="lb-status"></p>
+    <ul id="lb-list"></ul>
+    <button id="lb-close-btn">關閉</button>
+  </div>
 </div>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
@@ -562,7 +617,7 @@ function showMsg(title,text,btns){
   document.getElementById('mt').textContent=title;
   document.getElementById('mp').textContent=text;
   const bc=document.getElementById('mb');bc.innerHTML='';
-  btns.forEach(b=>{const btn=document.createElement('button');btn.textContent=b.l;btn.onclick=()=>{initAudio();box.style.display='none';b.a();};bc.appendChild(btn);});
+  btns.forEach(b=>{const btn=document.createElement('button');btn.textContent=b.l;if(b.cls)btn.className=b.cls;btn.onclick=()=>{initAudio();box.style.display='none';b.a();};bc.appendChild(btn);});
   box.style.display='block';
 }
 
@@ -625,11 +680,7 @@ function smashGlass(idx){
   updateHUD();
   setTimeout(()=>{
     if(gameState==='playing'&&glasses.every(g=>g.broken)){
-      sndWin();score+=500*round;saveHighScore();round++;updateHUD();
-      showMsg(`🏗️ 第 ${round-1} 棟大樓已拆除！`,`分數：${score}\n最高分：${highScore}\n準備下一棟...`,[
-        {l:'繼續拆！',a:()=>{buildBuilding();gameState='playing';}}
-      ]);
-      gameState='done';
+      sndWin();score+=500*round;round++;onRoundComplete('');
     }
   },600);
 }
@@ -683,11 +734,7 @@ function comboBomb(cx,cy){
   updateHUD();
   setTimeout(()=>{
     if(gameState==='playing'&&glasses.every(g=>g.broken)){
-      sndWin();score+=500*round;saveHighScore();round++;updateHUD();
-      showMsg(`🏗️ 第 ${round-1} 棟大樓已拆除！`,`分數：${score}\n最高分：${highScore}\n準備下一棟...`,[
-        {l:'繼續拆！',a:()=>{buildBuilding();gameState='playing';}}
-      ]);
-      gameState='done';
+      sndWin();score+=500*round;round++;onRoundComplete('');
     }
   },400);
 }
@@ -714,11 +761,7 @@ function nukeAll(){
   }
   setTimeout(()=>{
     if(glasses.every(g=>g.broken)){
-      sndWin();score+=1000*round;saveHighScore();round++;updateHUD();
-      showMsg(`🏗️ 第 ${round-1} 棟大樓已拆除！`,`全爆加分！分數：${score}\n最高分：${highScore}\n準備下一棟...`,[
-        {l:'繼續拆！',a:()=>{buildBuilding();gameState='playing';}}
-      ]);
-      gameState='done';
+      sndWin();score+=1000*round;round++;onRoundComplete('全爆加分！');
     }
   },delay+300);
 }
@@ -780,6 +823,109 @@ function loop(time){
 }
 requestAnimationFrame(loop);
 showMenu();
+
+// ===== SERVICE WORKER =====
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
+// ===== NICKNAME =====
+let playerName=localStorage.getItem('glassPlayerName')||'';
+
+function getOrAskNickname(callback){
+  if(playerName){callback(playerName);return;}
+  const modal=document.getElementById('nickname-modal');
+  const input=document.getElementById('nickname-input');
+  const btn=document.getElementById('nickname-confirm-btn');
+  modal.classList.remove('hidden');
+  setTimeout(()=>input.focus(),100);
+  function confirm(){
+    const v=input.value.trim().slice(0,20);
+    if(!v)return;
+    playerName=v;
+    localStorage.setItem('glassPlayerName',playerName);
+    modal.classList.add('hidden');
+    callback(playerName);
+  }
+  btn.onclick=confirm;
+  input.onkeydown=(e)=>{if(e.key==='Enter')confirm();};
+}
+
+// ===== LEADERBOARD API =====
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function submitScore(name,scoreVal,roundVal){
+  try{
+    const res=await fetch('/api/scores',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,score:scoreVal,round:roundVal})
+    });
+    if(!res.ok)return null;
+    const j=await res.json();
+    return j.rank??null;
+  }catch{return null;}
+}
+
+async function fetchTopScores(){
+  try{
+    const res=await fetch('/api/scores/top');
+    if(!res.ok)return[];
+    const j=await res.json();
+    return j.data||[];
+  }catch{return[];}
+}
+
+function showLeaderboard(userRank){
+  const modal=document.getElementById('lb-modal');
+  const statusEl=document.getElementById('lb-status');
+  const listEl=document.getElementById('lb-list');
+  modal.classList.remove('hidden');
+  statusEl.textContent=userRank?`✨ 你的本次排名：第 ${userRank} 名！`:'';
+  listEl.innerHTML='<li style="justify-content:center;color:#666;padding:16px 0">載入中...</li>';
+  fetchTopScores().then(data=>{
+    listEl.innerHTML='';
+    if(!data.length){
+      listEl.innerHTML='<li style="justify-content:center;color:#666;padding:16px 0">尚無紀錄，快成為第一名！</li>';
+      return;
+    }
+    const medals=['🥇','🥈','🥉'];
+    data.forEach((row,i)=>{
+      const li=document.createElement('li');
+      if(i<3)li.className=`top-${i+1}`;
+      li.innerHTML=`<span class="lb-rank">${medals[i]||(i+1)}</span><span class="lb-name">${escapeHtml(row.name)}</span><span class="lb-score">${Number(row.score).toLocaleString()}</span><span class="lb-round">第${row.round}棟</span>`;
+      listEl.appendChild(li);
+    });
+  });
+  document.getElementById('lb-close-btn').onclick=()=>modal.classList.add('hidden');
+}
+
+// ===== ROUND COMPLETE =====
+function onRoundComplete(bonusLabel){
+  saveHighScore();
+  updateHUD();
+  const currentScore=score;
+  const currentRound=round-1;
+  const titleText=`🏗️ 第 ${currentRound} 棟大樓已拆除！`;
+  const bodyText=`${bonusLabel?bonusLabel+'\n':''}分數：${currentScore.toLocaleString()}\n最高分：${highScore.toLocaleString()}\n準備下一棟...`;
+  showMsg(titleText,bodyText,[
+    {l:'繼續拆！',a:()=>{buildBuilding();gameState='playing';}},
+    {l:'🏆 排行榜',a:()=>{
+      getOrAskNickname(name=>{
+        submitScore(name,currentScore,currentRound).then(rank=>{
+          showLeaderboard(rank);
+        });
+      });
+    },cls:'lb-btn'}
+  ]);
+  gameState='done';
+}
 </script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+{
+  "name": "glass-smash",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ating1234/glass-smash.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ating1234/glass-smash/issues"
+  },
+  "homepage": "https://github.com/ating1234/glass-smash#readme",
+  "devDependencies": {
+    "sharp": "^0.34.5"
+  }
+}

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8cc4e0" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#4a9ab8" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="crack-glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c8e8f4" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#6ab8d4" stop-opacity="0.3"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- 深色背景 -->
+  <rect width="512" height="512" rx="100" fill="#111111"/>
+
+  <!-- 建築外框 -->
+  <rect x="72" y="60" width="368" height="400" rx="10" fill="#1a2535" stroke="#2a3f55" stroke-width="4"/>
+
+  <!-- 玻璃格 3×3，每格 102×102，間距 10px，起點 (88, 76) -->
+  <!-- Row 1 -->
+  <rect x="88" y="76" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <rect x="202" y="76" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <rect x="316" y="76" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <!-- Row 2 -->
+  <rect x="88" y="190" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <!-- 中間格：破裂 -->
+  <rect x="202" y="190" width="102" height="102" rx="8" fill="url(#crack-glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <rect x="316" y="190" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <!-- Row 3 -->
+  <rect x="88" y="304" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <rect x="202" y="304" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+  <rect x="316" y="304" width="102" height="102" rx="8" fill="url(#glass)" stroke="#2a3f55" stroke-width="2.5"/>
+
+  <!-- 玻璃高光反射 -->
+  <rect x="94" y="83" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="208" y="83" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="322" y="83" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="94" y="197" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="322" y="197" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="94" y="311" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="208" y="311" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+  <rect x="322" y="311" width="22" height="44" rx="6" fill="white" fill-opacity="0.25"/>
+
+  <!-- 中間格裂紋 -->
+  <g stroke="#ffffff" stroke-width="3.5" stroke-opacity="0.9" stroke-linecap="round" filter="url(#glow)">
+    <line x1="253" y1="241" x2="210" y2="208"/>
+    <line x1="253" y1="241" x2="304" y2="202"/>
+    <line x1="253" y1="241" x2="304" y2="282"/>
+    <line x1="253" y1="241" x2="215" y2="290"/>
+    <line x1="253" y1="241" x2="253" y2="192"/>
+    <line x1="253" y1="241" x2="204" y2="241"/>
+    <line x1="253" y1="241" x2="270" y2="292"/>
+  </g>
+
+  <!-- 右下石頭 emoji -->
+  <text x="415" y="476" font-size="72" text-anchor="middle" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">🪨</text>
+</svg>
