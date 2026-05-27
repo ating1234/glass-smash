@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "砸玻璃大挑戰 — Cloudflare Pages",
   "type": "module",
+  "scripts": {
+    "build": "cp -r index.html sw.js manifest.json _headers public/ && cp icons/icon-192.png icons/icon-512.png public/icons/"
+  },
   "license": "ISC"
 }

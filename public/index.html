@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="砸玻璃">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json?v=2">
+<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png?v=2">
+<link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png?v=2">
+<meta name="theme-color" content="#111111">
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token":"REPLACE_WITH_YOUR_TOKEN"}'></script>
+<title>砸玻璃大挑戰</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+body{font-family:'PingFang TC','Microsoft JhengHei',sans-serif;user-select:none;overscroll-behavior:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#111}
+@media(pointer:fine){body{cursor:crosshair}}
+canvas{display:block;width:100%;height:100%}
+#ui{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+#hud{position:absolute;top:calc(8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;background:rgba(0,0,0,0.7);padding:6px 18px;border-radius:20px;color:#fff;font-size:14px}
+#hud span{white-space:nowrap}
+/* Combo display — big yellow flash */
+#combo-display{position:absolute;top:calc(48px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);color:#ff0;font-size:28px;font-weight:bold;opacity:0;transition:opacity 0.15s;text-shadow:0 0 14px rgba(255,220,0,0.8);pointer-events:none}
+/* Shard progress bar under HUD */
+#shard-display{position:absolute;top:calc(48px + env(safe-area-inset-top));right:16px;color:#aef;font-size:13px;font-weight:bold;opacity:0;transition:opacity 0.3s;text-shadow:0 0 8px rgba(100,200,255,0.6);pointer-events:none}
+#item-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:28px;font-weight:bold;opacity:0;transition:opacity 0.3s;text-shadow:0 0 20px rgba(255,100,0,0.8);pointer-events:none}
+#tool-bar{position:absolute;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:6px 16px;border-radius:18px;color:#fff;font-size:15px}
+/* Nuke button — hidden until shards collected */
+@keyframes nukePulse{from{transform:scale(1);box-shadow:0 0 15px rgba(231,76,60,0.4)}to{transform:scale(1.08);box-shadow:0 0 30px rgba(231,76,60,0.8)}}
+#nuke-btn{display:none;position:absolute;bottom:calc(55px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);pointer-events:auto}
+#nuke-btn button{font-size:22px;padding:12px 28px;border:none;border-radius:16px;background:linear-gradient(135deg,#e74c3c,#f39c12);color:#fff;cursor:pointer;animation:nukePulse 0.6s infinite alternate;box-shadow:0 0 20px rgba(231,76,60,0.6)}
+#item-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:28px;font-weight:bold;opacity:0;transition:opacity 0.3s;text-shadow:0 0 20px rgba(255,100,0,0.8);pointer-events:none}
+#msgbox{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.92);padding:30px 44px;border-radius:18px;color:#fff;text-align:center;pointer-events:auto;display:none;max-width:92vw}
+#msgbox h2{font-size:26px;margin-bottom:10px}
+#msgbox p{font-size:15px;margin-bottom:16px;color:#ccc;white-space:pre-line;line-height:1.6}
+#msgbox button{padding:10px 32px;font-size:16px;border:none;border-radius:10px;background:#27ae60;color:#fff;cursor:pointer;margin:4px}
+#msgbox button:hover{background:#1e8449}
+#msgbox button.lb-btn{background:linear-gradient(135deg,#2980b9,#1a5276)}
+#msgbox button.lb-btn:hover{background:linear-gradient(135deg,#1a5276,#0d2b4a)}
+
+/* ===== NICKNAME MODAL ===== */
+#nickname-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+#nickname-modal.hidden{display:none}
+#nickname-box{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-radius:22px;padding:34px 40px;color:#fff;text-align:center;max-width:90vw;width:320px;box-shadow:0 8px 48px rgba(0,0,0,0.6)}
+#nickname-box h2{font-size:22px;margin-bottom:8px}
+#nickname-box p{color:#aaa;font-size:13px;margin-bottom:18px;line-height:1.5}
+#nickname-input{width:100%;padding:10px 14px;font-size:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:#fff;outline:none;margin-bottom:14px;font-family:inherit}
+#nickname-input::placeholder{color:#666}
+#nickname-input:focus{border-color:rgba(100,200,255,0.5);box-shadow:0 0 0 2px rgba(100,200,255,0.15)}
+
+/* ===== LEADERBOARD MODAL ===== */
+#lb-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
+#lb-modal.hidden{display:none}
+#lb-box{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);border-radius:22px;padding:28px 28px 24px;color:#fff;text-align:center;max-width:92vw;width:380px;box-shadow:0 12px 60px rgba(0,0,0,0.65)}
+#lb-box h2{font-size:22px;margin-bottom:4px;letter-spacing:1px}
+#lb-status{color:#aaa;font-size:13px;margin-bottom:14px;min-height:18px}
+#lb-list{list-style:none;margin-bottom:18px;text-align:left}
+#lb-list li{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;font-size:14px;margin-bottom:5px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.04)}
+#lb-list li.top-1{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.28)}
+#lb-list li.top-2{background:rgba(192,192,192,0.08);border-color:rgba(192,192,192,0.22)}
+#lb-list li.top-3{background:rgba(205,127,50,0.09);border-color:rgba(205,127,50,0.22)}
+.lb-rank{width:26px;text-align:center;font-size:17px;flex-shrink:0}
+.lb-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#e0e0e0}
+.lb-score{font-weight:bold;color:#7df;font-size:15px;flex-shrink:0}
+.lb-round{color:#888;font-size:11px;margin-left:4px;flex-shrink:0}
+#lb-close-btn,#nickname-confirm-btn{padding:10px 30px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;cursor:pointer;margin:4px;font-family:inherit}
+#lb-close-btn:hover,#nickname-confirm-btn:hover{background:linear-gradient(135deg,#27ae60,#1e8449)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud">
+    <span id="hs">🪟 0 / 0</span>
+    <span id="hp">分數 0</span>
+    <span id="hr">第 1 棟</span>
+    <span id="hb" style="color:#ffd700">🏆 0</span>
+  </div>
+  <div id="combo-display"></div>
+  <div id="shard-display"></div>
+  <div id="nuke-btn">
+    <button onclick="nukeAll()">💥 全部爆破！</button>
+  </div>
+  <div id="item-toast"></div>
+  <div id="tool-bar">🪨 點擊砸玻璃</div>
+  <div id="msgbox"><h2 id="mt"></h2><p id="mp"></p><div id="mb"></div></div>
+</div>
+
+<!-- 暱稱輸入 Modal -->
+<div id="nickname-modal" class="hidden">
+  <div id="nickname-box">
+    <h2>👤 輸入你的暱稱</h2>
+    <p>用來顯示在全球排行榜<br>最多 20 個字</p>
+    <input id="nickname-input" type="text" maxlength="20" placeholder="你的暱稱...">
+    <button id="nickname-confirm-btn">確認 ✓</button>
+  </div>
+</div>
+
+<!-- 排行榜 Modal -->
+<div id="lb-modal" class="hidden">
+  <div id="lb-box">
+    <h2>🏆 全球排行榜</h2>
+    <p id="lb-status"></p>
+    <ul id="lb-list"></ul>
+    <button id="lb-close-btn">關閉</button>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+if(!ctx.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};}
+function resize(){const vv=window.visualViewport;canvas.width=vv?vv.width:innerWidth;canvas.height=vv?vv.height:innerHeight;}
+resize();addEventListener('resize',resize);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',resize);
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+
+// ===== AUDIO =====
+let ac=null;
+function initAudio(){
+  if(!ac)try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  if(ac&&ac.state==='suspended')ac.resume();
+}
+['click','touchstart','touchend','mousedown'].forEach(e=>{
+  document.addEventListener(e,()=>initAudio(),{passive:true});
+});
+
+function sndCrack(){
+  if(!ac)return;const d=0.2,b=ac.createBuffer(1,ac.sampleRate*d|0,ac.sampleRate),a=b.getChannelData(0);
+  for(let i=0;i<a.length;i++){const t=i/ac.sampleRate;a[i]=(Math.random()*2-1)*Math.exp(-t*20)*0.9;if(i<200)a[i]+=(Math.random()*2-1)*0.9*(1-i/200);}
+  const s=ac.createBufferSource();s.buffer=b;const g=ac.createGain();g.gain.value=1;s.connect(g);g.connect(ac.destination);s.start();
+}
+function sndShatter(){
+  if(!ac)return;const d=0.8,b=ac.createBuffer(2,ac.sampleRate*d|0,ac.sampleRate);
+  for(let ch=0;ch<2;ch++){const a=b.getChannelData(ch);for(let i=0;i<a.length;i++){const t=i/ac.sampleRate;let v=(Math.random()*2-1)*Math.exp(-t*5)*0.9;v+=(Math.random()*2-1)*Math.exp(-t*3)*0.4*(t>0.03?1:0);for(let p=0;p<8;p++){const pt=0.05+p*0.06;if(t>pt&&t<pt+0.05)v+=Math.sin(2*Math.PI*(3500+p*1200)*t)*0.2*Math.exp(-(t-pt)*40);}a[i]=v*0.85;}}
+  const s=ac.createBufferSource();s.buffer=b;const g=ac.createGain();g.gain.value=1;s.connect(g);g.connect(ac.destination);s.start();
+}
+function sndBoom(){
+  if(!ac)return;const d=0.6,b=ac.createBuffer(1,ac.sampleRate*d|0,ac.sampleRate),a=b.getChannelData(0);
+  for(let i=0;i<a.length;i++){const t=i/ac.sampleRate;a[i]=Math.sin(2*Math.PI*60*t)*Math.exp(-t*6)*0.8+(Math.random()*2-1)*Math.exp(-t*4)*0.6;}
+  const s=ac.createBufferSource();s.buffer=b;const g=ac.createGain();g.gain.value=1;s.connect(g);g.connect(ac.destination);s.start();
+}
+function sndMegaBoom(){
+  if(!ac)return;
+  const d=2.0,sr=ac.sampleRate,len=sr*d|0;
+  const b=ac.createBuffer(2,len,sr);
+  for(let ch=0;ch<2;ch++){
+    const a=b.getChannelData(ch);
+    for(let i=0;i<len;i++){
+      const t=i/sr;
+      // Deep sub-bass thump
+      const sub=Math.sin(2*Math.PI*38*t)*Math.exp(-t*3.5)*1.2;
+      // Mid punch
+      const mid=Math.sin(2*Math.PI*90*t)*Math.exp(-t*7)*0.9;
+      // Rumble noise
+      const noise=(Math.random()*2-1)*Math.exp(-t*2.2)*1.1;
+      // High crackle
+      const crack=(Math.random()*2-1)*Math.exp(-t*18)*(t<0.04?1.5:0);
+      // Secondary shockwave
+      const wave2=Math.sin(2*Math.PI*55*(t-0.06))*Math.exp(-(t-0.06)*5)*(t>0.06?0.6:0);
+      a[i]=Math.max(-1,Math.min(1,(sub+mid+noise+crack+wave2)*(ch===0?1:0.95)));
+    }
+  }
+  const s=ac.createBufferSource();s.buffer=b;
+  const g=ac.createGain();g.gain.value=2.2;
+  // Compressor to avoid clipping while keeping it loud
+  const comp=ac.createDynamicsCompressor();
+  comp.threshold.value=-6;comp.knee.value=3;comp.ratio.value=4;
+  comp.attack.value=0.001;comp.release.value=0.25;
+  s.connect(g);g.connect(comp);comp.connect(ac.destination);
+  s.start();
+}
+function sndItem(){
+  if(!ac)return;const d=0.4,b=ac.createBuffer(1,ac.sampleRate*d|0,ac.sampleRate),a=b.getChannelData(0);
+  [880,1100,1320].forEach((f,j)=>{for(let i=0;i<a.length;i++){const t=i/ac.sampleRate;const st=j*0.08;if(t>=st)a[i]+=Math.sin(2*Math.PI*f*t)*Math.exp(-(t-st)*8)*0.25;}});
+  const s=ac.createBufferSource();s.buffer=b;const g=ac.createGain();g.gain.value=1;s.connect(g);g.connect(ac.destination);s.start();
+}
+function sndWin(){
+  if(!ac)return;const d=0.8,b=ac.createBuffer(1,ac.sampleRate*d|0,ac.sampleRate),a=b.getChannelData(0);
+  [523,659,784,1047].forEach((f,j)=>{for(let i=0;i<a.length;i++){const t=i/ac.sampleRate;const st=j*0.1;if(t>=st)a[i]+=Math.sin(2*Math.PI*f*t)*Math.exp(-(t-st)*4)*0.3;}});
+  const s=ac.createBufferSource();s.buffer=b;const g=ac.createGain();g.gain.value=1;s.connect(g);g.connect(ac.destination);s.start();
+}
+function sndMiss(){
+  if(!ac)return;const d=0.15,b=ac.createBuffer(1,ac.sampleRate*d|0,ac.sampleRate),a=b.getChannelData(0);
+  for(let i=0;i<a.length;i++){const t=i/ac.sampleRate;a[i]=Math.sin(2*Math.PI*200*t)*Math.exp(-t*18)*0.3;}
+  const s=ac.createBufferSource();s.buffer=b;const g=ac.createGain();g.gain.value=0.5;s.connect(g);g.connect(ac.destination);s.start();
+}
+</script>
+<script>
+// ===== SPECIAL ITEMS =====
+const ITEMS=[
+  {emoji:'💣',name:'炸彈',desc:'炸碎周圍 3×3 玻璃',action:(row,col,cols,rows)=>{
+    const targets=[];
+    for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+      const r=row+dr,c=col+dc;
+      if(r>=0&&r<rows&&c>=0&&c<cols)targets.push(r*cols+c);
+    }
+    return targets;
+  }},
+  {emoji:'🔨',name:'巨鎚',desc:'砸碎整排玻璃',action:(row,col,cols,rows)=>{
+    const targets=[];for(let c=0;c<cols;c++)targets.push(row*cols+c);return targets;
+  }},
+  {emoji:'⚡',name:'閃電',desc:'隨機炸碎 12 片玻璃',action:(row,col,cols,rows)=>{
+    const all=[];for(let i=0;i<rows*cols;i++)if(!glasses[i].broken)all.push(i);
+    const targets=[];for(let i=0;i<Math.min(12,all.length);i++){const idx=Math.floor(Math.random()*all.length);targets.push(all.splice(idx,1)[0]);}
+    return targets;
+  }},
+  {emoji:'🌊',name:'海嘯',desc:'砸碎整列玻璃',action:(row,col,cols,rows)=>{
+    const targets=[];for(let r=0;r<rows;r++)targets.push(r*cols+col);return targets;
+  }},
+  {emoji:'☄️',name:'隕石',desc:'砸碎隨機一大區域',action:(row,col,cols,rows)=>{
+    const targets=[];const cr=row,cc=col,rad=2;
+    for(let dr=-rad;dr<=rad;dr++)for(let dc=-rad;dc<=rad;dc++){
+      const r=cr+dr,c=cc+dc;
+      if(r>=0&&r<rows&&c>=0&&c<cols&&Math.abs(dr)+Math.abs(dc)<=rad)targets.push(r*cols+c);
+    }
+    return targets;
+  }}
+];
+
+// ===== STATE =====
+let glasses=[],particles=[],projectiles=[];
+let shake=0,score=0,round=1,nukeShards=0;
+const NUKE_NEED=5;
+const NUKE_TOTAL=8;
+let gameState='menu';
+let mouseX=0,mouseY=0;
+let buildingCols=0,buildingRows=0;
+let buildStyle=0;
+const isTouch='ontouchstart'in window||navigator.maxTouchPoints>0;
+
+// ===== COMBO =====
+let combo=0,comboTimer=null;
+function resetCombo(){combo=0;updateComboDisplay();}
+function updateComboDisplay(){
+  const el=document.getElementById('combo-display');
+  if(combo>=3){
+    const toNext=15-((combo-1)%15+1);
+    const bombWarn=toNext<=3&&combo>=12;
+    el.textContent=bombWarn?`🔥 ${combo} COMBO！再${toNext}下爆炸！`:`✨ ${combo} COMBO！`;
+    el.style.opacity='1';
+    el.style.color=bombWarn?'#ff6600':'#ff0';
+    el.style.fontSize=Math.min(48,24+combo*2)+'px';
+  } else {
+    el.style.opacity='0';
+    el.style.color='#ff0';
+  }
+}
+
+// ===== HIGH SCORE =====
+let highScore=parseInt(localStorage.getItem('glassHighScore')||'0');
+function saveHighScore(){
+  if(score>highScore){highScore=score;localStorage.setItem('glassHighScore',highScore);}
+}
+
+// Building styles
+const STYLES=[
+  {name:'方格帷幕',frame:'#2a3a4a',accent:'#3a5a6a',bg1:'#0a0a2e',bg2:'#1a1a4e',layout:'rect'},
+  {name:'三角稜鏡',frame:'#3a2a4a',accent:'#6a3a7a',bg1:'#1a0a2e',bg2:'#2e1a4e',layout:'tri'},
+  {name:'蜂巢大樓',frame:'#2a4a3a',accent:'#3a7a5a',bg1:'#0a2e1a',bg2:'#1a4e2e',layout:'hex'},
+  {name:'菱形水晶',frame:'#4a3a2a',accent:'#7a5a3a',bg1:'#2e1a0a',bg2:'#4e2e1a',layout:'diamond'},
+  {name:'圓形泡泡',frame:'#2a3a4a',accent:'#4a6a8a',bg1:'#0a1a2e',bg2:'#1a2e4e',layout:'circle'},
+  {name:'磚牆堡壘',frame:'#4a2a2a',accent:'#8a4a3a',bg1:'#2e0a0a',bg2:'#4e1a1a',layout:'brick'},
+  {name:'寬幅玻璃',frame:'#2a4a4a',accent:'#3a8a8a',bg1:'#0a2e2e',bg2:'#1a4e4e',layout:'wide'},
+  {name:'細長柱廊',frame:'#3a3a4a',accent:'#5a5a7a',bg1:'#0a0a1e',bg2:'#2a2a4e',layout:'tall'},
+  {name:'交錯拼貼',frame:'#4a4a2a',accent:'#7a7a3a',bg1:'#1e1e0a',bg2:'#3e3e1a',layout:'offset'},
+  {name:'迷你馬賽克',frame:'#3a2a3a',accent:'#6a4a6a',bg1:'#1a0a1a',bg2:'#2e1a2e',layout:'mini'},
+  {name:'霓虹未來',frame:'#1a0a3a',accent:'#cc44ff',bg1:'#0a0020',bg2:'#1a0040',layout:'mini'},
+  {name:'黃金帝國',frame:'#4a3a0a',accent:'#ffaa00',bg1:'#201000',bg2:'#3a2000',layout:'tall'},
+  {name:'碧海晴天',frame:'#0a2a3a',accent:'#00ccff',bg1:'#001020',bg2:'#002030',layout:'wide'},
+  {name:'赤炎要塞',frame:'#3a0a0a',accent:'#ff4400',bg1:'#200000',bg2:'#3a0000',layout:'brick'},
+  {name:'翡翠迷宮',frame:'#0a3a1a',accent:'#00ff88',bg1:'#001010',bg2:'#002020',layout:'hex'},
+  {name:'銀河前哨',frame:'#1a1a2a',accent:'#aaaaff',bg1:'#050510',bg2:'#0a0a20',layout:'circle'},
+  {name:'玫瑰晶宮',frame:'#3a0a2a',accent:'#ff66aa',bg1:'#200015',bg2:'#300025',layout:'diamond'},
+  {name:'極地堡壘',frame:'#2a3a4a',accent:'#88ccff',bg1:'#0a1520',bg2:'#102030',layout:'offset'},
+  {name:'熔岩紀念碑',frame:'#3a1a0a',accent:'#ff6600',bg1:'#1a0500',bg2:'#2a0a00',layout:'rect'},
+  {name:'幽靈塔樓',frame:'#1a1a2a',accent:'#88ff88',bg1:'#050508',bg2:'#0a0a12',layout:'tri'},
+];
+
+// ===== GLASS =====
+class Glass{
+  constructor(cx,cy,size,idx,shape){
+    this.cx=cx;this.cy=cy;this.size=size;this.idx=idx;this.shape=shape||'rect';
+    this.broken=false;this.item=null;
+    this.shimmer=Math.random()*6.28;
+    this.x=cx-size/2;this.y=cy-size/2;this.w=size;this.h=size;
+    this.points=this._makePoints();
+  }
+  _makePoints(){
+    const s=this.size*0.5,cx=this.cx,cy=this.cy;
+    switch(this.shape){
+      case 'tri_up': return [{x:cx,y:cy-s},{x:cx+s,y:cy+s},{x:cx-s,y:cy+s}];
+      case 'tri_down': return [{x:cx,y:cy+s},{x:cx+s,y:cy-s},{x:cx-s,y:cy-s}];
+      case 'hex': {const p=[];for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;p.push({x:cx+Math.cos(a)*s,y:cy+Math.sin(a)*s});}return p;}
+      case 'diamond': return [{x:cx,y:cy-s},{x:cx+s,y:cy},{x:cx,y:cy+s},{x:cx-s,y:cy}];
+      case 'circle': return null;
+      default: return [{x:cx-s,y:cy-s},{x:cx+s,y:cy-s},{x:cx+s,y:cy+s},{x:cx-s,y:cy+s}];
+    }
+  }
+  _tracePath(){
+    if(this.shape==='circle'){ctx.beginPath();ctx.arc(this.cx,this.cy,this.size*0.5,0,6.28);return;}
+    const p=this.points;if(!p||!p.length)return;
+    ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);
+    for(let i=1;i<p.length;i++)ctx.lineTo(p[i].x,p[i].y);
+    ctx.closePath();
+  }
+  hitTest(tx,ty){
+    if(this.broken)return false;
+    const dx=tx-this.cx,dy=ty-this.cy;
+    return Math.sqrt(dx*dx+dy*dy)<this.size*0.55;
+  }
+  smash(){
+    if(this.broken)return;
+    this.broken=true;
+    if(this.item&&this.item.isNukeShard){
+      nukeShards++;sndItem();
+      updateShardDisplay();
+      updateHUD();
+      // Show nuke button when threshold reached (player decides when to fire)
+      if(nukeShards>=NUKE_NEED){
+        document.getElementById('nuke-btn').style.display='block';
+        showItemToast({emoji:'💥',name:'全爆就緒！',desc:'按下按鈕引爆整棟！'},0);
+      }
+    }
+    for(let i=0;i<10;i++)particles.push({
+      x:this.cx+(Math.random()-0.5)*this.size,y:this.cy+(Math.random()-0.5)*this.size,
+      vx:(Math.random()-0.5)*8,vy:(Math.random()-0.5)*6-3,
+      sz:2+Math.random()*8,a:1,r:Math.random()*6.28,
+      c:`hsl(${185+Math.random()*40},70%,${55+Math.random()*35}%)`
+    });
+  }
+  draw(time){
+    if(this.broken)return;
+    const s=this.shimmer;
+    ctx.save();
+    const grd=ctx.createLinearGradient(this.cx-this.size/2,this.cy-this.size/2,this.cx+this.size/2,this.cy+this.size/2);
+    grd.addColorStop(0,'rgba(140,200,220,0.35)');
+    grd.addColorStop(0.3+Math.sin(time*0.001+s)*0.1,'rgba(200,235,245,0.5)');
+    grd.addColorStop(1,'rgba(140,200,220,0.35)');
+    ctx.fillStyle=grd;
+    this._tracePath();ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.beginPath();ctx.arc(this.cx-this.size*0.15,this.cy-this.size*0.15,this.size*0.12,0,6.28);ctx.fill();
+    ctx.strokeStyle='rgba(60,80,90,0.5)';ctx.lineWidth=0.8;
+    this._tracePath();ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ===== PROJECTILE =====
+class Proj{
+  constructor(x,y,tx,ty,emoji,sz){
+    this.x=x;this.y=y;this.emoji=emoji;this.sz=sz||28;
+    this.alive=true;this.rot=0;this.trail=[];
+    const dx=tx-x,dy=ty-y,dist=Math.sqrt(dx*dx+dy*dy);
+    const speed=26;this.vx=(dx/dist)*speed;this.vy=(dy/dist)*speed;
+    this.life=Math.ceil(dist/speed)+5;
+  }
+  update(){
+    this.trail.push({x:this.x,y:this.y,a:0.4});
+    if(this.trail.length>10)this.trail.shift();
+    this.x+=this.vx;this.y+=this.vy;this.rot+=0.15;
+    if(--this.life<=0)this.alive=false;
+  }
+  draw(){
+    for(const t of this.trail){ctx.globalAlpha=t.a;t.a-=0.04;ctx.fillStyle='rgba(255,200,100,0.3)';ctx.beginPath();ctx.arc(t.x,t.y,3,0,6.28);ctx.fill();}
+    ctx.globalAlpha=1;ctx.save();ctx.translate(this.x,this.y);ctx.rotate(this.rot);
+    ctx.font=this.sz+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(this.emoji,0,0);ctx.restore();
+  }
+}
+</script>
+<script>
+// ===== BUILDING =====
+function buildBuilding(){
+  glasses=[];particles=[];projectiles=[];nukeShards=0;
+  combo=0;if(comboTimer)clearTimeout(comboTimer);
+  document.getElementById('nuke-btn').style.display='none';
+  document.getElementById('shard-display').style.opacity='0';
+  let newStyle;
+  do{newStyle=Math.floor(Math.random()*STYLES.length);}while(newStyle===buildStyle&&STYLES.length>1);
+  buildStyle=newStyle;
+  const W=canvas.width,H=canvas.height;
+  const bw=W*0.82,bh=H*0.78;
+  const bx=(W-bw)/2,by=H*0.06;
+  const style=STYLES[buildStyle];
+
+  // Difficulty: scale glass density with round (caps at round 8)
+  const scaleFactor=Math.min(1.5, 1+(round-1)*0.07);
+
+  let cols,rows;
+  const lay=style.layout;
+  function mkRect(c,r,cw,ch){
+    const g=new Glass(bx+c*cw+cw/2,by+r*ch+ch/2,Math.max(cw,ch),glasses.length,'rect');
+    g.points=[{x:g.cx-cw/2,y:g.cy-ch/2},{x:g.cx+cw/2,y:g.cy-ch/2},{x:g.cx+cw/2,y:g.cy+ch/2},{x:g.cx-cw/2,y:g.cy+ch/2}];
+    return g;
+  }
+
+  if(lay==='rect'){
+    cols=Math.max(6,Math.min(20,Math.floor(bw/36*scaleFactor)));
+    rows=Math.max(8,Math.min(32,Math.floor(bh/32*scaleFactor)));
+    const gw=bw/cols,gh=bh/rows;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)glasses.push(mkRect(c,r,gw,gh));
+  }else if(lay==='tri'){
+    const sz=Math.min(bw/9,bh/12)/Math.max(1,scaleFactor*0.4);
+    const tw=sz,th=sz*0.866;
+    cols=Math.floor(bw/(tw*0.5));rows=Math.floor(bh/th);
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      if(bx+c*tw*0.5+tw*0.5>bx+bw)continue;
+      glasses.push(new Glass(bx+c*tw*0.5+tw*0.5,by+r*th+th/2,sz,glasses.length,(r+c)%2===0?'tri_up':'tri_down'));
+    }
+  }else if(lay==='hex'){
+    const sz=Math.min(bw/8,bh/9)/Math.max(1,scaleFactor*0.35);
+    const hx=sz*0.866,hy=sz*0.75;
+    cols=Math.floor(bw/hx);rows=Math.floor(bh/hy);
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const x=bx+c*hx+(r%2)*hx*0.5+sz*0.5,y=by+r*hy+sz*0.5;
+      if(x+sz*0.5>bx+bw+2)continue;
+      glasses.push(new Glass(x,y,sz,glasses.length,'hex'));
+    }
+  }else if(lay==='diamond'){
+    const sz=Math.min(bw/8,bh/9);
+    cols=Math.floor(bw/sz);rows=Math.floor(bh/(sz*0.5));
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const x=bx+c*sz+(r%2)*sz*0.5+sz*0.5,y=by+r*sz*0.5+sz*0.25;
+      if(x+sz*0.5>bx+bw+2)continue;
+      glasses.push(new Glass(x,y,sz,glasses.length,'diamond'));
+    }
+  }else if(lay==='circle'){
+    const sz=Math.min(bw/9,bh/11);
+    cols=Math.floor(bw/sz);rows=Math.floor(bh/sz);
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
+      glasses.push(new Glass(bx+c*sz+sz/2,by+r*sz+sz/2,sz,glasses.length,'circle'));
+  }else if(lay==='brick'){
+    cols=Math.max(4,Math.floor(bw/60*scaleFactor));rows=Math.max(10,Math.floor(bh/28*scaleFactor));
+    const gw=bw/cols,gh=bh/rows;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const off=(r%2)*gw*0.5;
+      const x=bx+c*gw+off;
+      if(x+gw>bx+bw+gw*0.3)continue;
+      glasses.push(mkRect(0,0,gw,gh));
+      const g=glasses[glasses.length-1];
+      g.cx=x+gw/2;g.cy=by+r*gh+gh/2;
+      g.points=[{x:g.cx-gw/2,y:g.cy-gh/2},{x:g.cx+gw/2,y:g.cy-gh/2},{x:g.cx+gw/2,y:g.cy+gh/2},{x:g.cx-gw/2,y:g.cy+gh/2}];
+    }
+  }else if(lay==='wide'){
+    cols=Math.max(3,Math.floor(bw/100));rows=Math.max(12,Math.floor(bh/24*scaleFactor));
+    const gw=bw/cols,gh=bh/rows;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)glasses.push(mkRect(c,r,gw,gh));
+  }else if(lay==='tall'){
+    cols=Math.max(12,Math.floor(bw/24*scaleFactor));rows=Math.max(4,Math.floor(bh/80));
+    const gw=bw/cols,gh=bh/rows;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)glasses.push(mkRect(c,r,gw,gh));
+  }else if(lay==='offset'){
+    const sz=Math.min(bw/12,bh/14);
+    cols=Math.floor(bw/sz);rows=Math.floor(bh/sz);
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const off=(r%2)*sz*0.5;
+      const x=bx+c*sz+off+sz/2,y=by+r*sz+sz/2;
+      if(x+sz/2>bx+bw+2)continue;
+      glasses.push(new Glass(x,y,sz,glasses.length,'rect'));
+    }
+  }else if(lay==='mini'){
+    cols=Math.max(14,Math.floor(bw/22*scaleFactor));rows=Math.max(18,Math.floor(bh/20*scaleFactor));
+    const gw=bw/cols,gh=bh/rows;
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)glasses.push(mkRect(c,r,gw,gh));
+  }
+
+  buildingCols=cols||10;buildingRows=rows||10;
+  glasses.forEach((g,i)=>g.idx=i);
+
+  // Item density: 30% base, decreasing by 2% per round (min 15%)
+  const density=Math.max(0.15, 0.30-(round-1)*0.02);
+  const itemCount=Math.max(5,Math.floor(glasses.length*density));
+  const indices=[...Array(glasses.length).keys()];
+  for(let i=0;i<itemCount&&indices.length>0;i++){
+    const pick=Math.floor(Math.random()*indices.length);
+    const idx=indices.splice(pick,1)[0];
+    const pool=[...ITEMS,...Array(4).fill(ITEMS.find(it=>it.emoji==='☄️'))];
+    glasses[idx].item=pool[Math.floor(Math.random()*pool.length)];
+  }
+  // Place nuke shards in remaining free slots
+  const freeIndices=glasses.map((g,i)=>g.item?-1:i).filter(i=>i>=0);
+  const shardCount=Math.min(NUKE_TOTAL,freeIndices.length);
+  for(let i=0;i<shardCount;i++){
+    const pick=Math.floor(Math.random()*freeIndices.length);
+    const idx=freeIndices.splice(pick,1)[0];
+    glasses[idx].item={emoji:'🌟',name:'全爆碎片',desc:`碎片`,isNukeShard:true,action:()=>[]};
+  }
+  updateHUD();
+  document.getElementById('tool-bar').textContent=`🏢 ${style.name}　🪨 點擊砸玻璃`;
+}
+
+// ===== DRAWING =====
+function drawScene(time){
+  const W=canvas.width,H=canvas.height;
+  const st=STYLES[buildStyle];
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,st.bg1);bg.addColorStop(0.5,st.bg2);bg.addColorStop(1,'#0d0d1a');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  for(let i=0;i<30;i++){
+    const sx=(Math.sin(i*127.1+i)*0.5+0.5)*W;
+    const sy=(Math.sin(i*311.7+i)*0.5+0.5)*H*0.3;
+    const ss=0.5+Math.sin(time*0.002+i)*0.5;
+    ctx.globalAlpha=0.3+ss*0.4;
+    ctx.beginPath();ctx.arc(sx,sy,0.8+ss,0,6.28);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  if(glasses.length>0){
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for(const g of glasses){
+      minX=Math.min(minX,g.cx-g.size/2);minY=Math.min(minY,g.cy-g.size/2);
+      maxX=Math.max(maxX,g.cx+g.size/2);maxY=Math.max(maxY,g.cy+g.size/2);
+    }
+    const fx=minX-6,fy=minY-6,fw=maxX-minX+12,fh=maxY-minY+12;
+    const depth=Math.round(Math.min(55,fw*0.07));
+    // Drop shadow
+    ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fillRect(fx+depth+4,fy+4,fw,fh);
+    // === 3D RIGHT SIDE FACE ===
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(fx+fw,fy);ctx.lineTo(fx+fw+depth,fy-depth);
+    ctx.lineTo(fx+fw+depth,fy+fh-depth);ctx.lineTo(fx+fw,fy+fh);
+    ctx.closePath();
+    ctx.fillStyle=st.frame;ctx.globalAlpha=0.45;ctx.fill();
+    // Floor lines on right face
+    const floorH=Math.max(12,fh/22);
+    ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=0.6;
+    for(let y=fy+floorH;y<fy+fh-2;y+=floorH){
+      const t=(y-fy)/fh;
+      ctx.beginPath();ctx.moveTo(fx+fw,y);ctx.lineTo(fx+fw+depth,y-depth);ctx.stroke();
+    }
+    // Small windows on right face
+    ctx.globalAlpha=0.18;
+    const wCols=2,wFloors=Math.floor(fh/floorH);
+    for(let r=0;r<wFloors;r++){
+      for(let c=0;c<wCols;c++){
+        const u=(c+0.15)/(wCols),u2=(c+0.85)/(wCols);
+        const v=(r+0.1)/wFloors,v2=(r+0.9)/wFloors;
+        ctx.fillStyle=st.accent;
+        ctx.beginPath();
+        ctx.moveTo(fx+fw+u*depth,fy+v*fh-u*depth);
+        ctx.lineTo(fx+fw+u2*depth,fy+v*fh-u2*depth);
+        ctx.lineTo(fx+fw+u2*depth,fy+v2*fh-u2*depth);
+        ctx.lineTo(fx+fw+u*depth,fy+v2*fh-u*depth);
+        ctx.closePath();ctx.fill();
+      }
+    }
+    ctx.restore();
+    // === 3D TOP FACE ===
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(fx,fy);ctx.lineTo(fx+depth,fy-depth);
+    ctx.lineTo(fx+fw+depth,fy-depth);ctx.lineTo(fx+fw,fy);
+    ctx.closePath();
+    ctx.fillStyle='rgba(220,235,255,0.13)';ctx.fill();
+    // Rooftop detail stripe
+    ctx.strokeStyle=st.accent;ctx.lineWidth=1;ctx.globalAlpha=0.3;ctx.stroke();
+    ctx.restore();
+    // 3D edge lines
+    ctx.save();
+    ctx.strokeStyle=st.accent;ctx.lineWidth=0.7;ctx.globalAlpha=0.5;
+    ctx.beginPath();
+    ctx.moveTo(fx+fw,fy);ctx.lineTo(fx+fw+depth,fy-depth);
+    ctx.moveTo(fx+fw,fy+fh);ctx.lineTo(fx+fw+depth,fy+fh-depth);
+    ctx.moveTo(fx+fw+depth,fy-depth);ctx.lineTo(fx+fw+depth,fy+fh-depth);
+    ctx.moveTo(fx,fy);ctx.lineTo(fx+depth,fy-depth);
+    ctx.stroke();ctx.restore();
+    // === FRONT FACE ===
+    ctx.fillStyle=st.frame;ctx.fillRect(fx,fy,fw,fh);
+    ctx.strokeStyle=st.accent;ctx.lineWidth=0.8;ctx.globalAlpha=0.3;
+    for(const g of glasses){g._tracePath();ctx.stroke();}
+    ctx.globalAlpha=1;
+  }
+  for(const g of glasses){
+    if(g.broken){
+      ctx.fillStyle='rgba(10,10,25,0.5)';
+      ctx.save();g._tracePath();ctx.fill();ctx.restore();
+    }
+    g.draw(time);
+  }
+}
+
+// ===== HUD =====
+function updateHUD(){
+  const total=glasses.length,broken=glasses.filter(g=>g.broken).length;
+  document.getElementById('hs').textContent=`🪟 ${broken}/${total}`;
+  document.getElementById('hp').textContent=`分數 ${score}`;
+  document.getElementById('hr').textContent=`第 ${round} 棟`;
+  document.getElementById('hb').textContent=`🏆 ${highScore}`;
+}
+
+function updateShardDisplay(){
+  const el=document.getElementById('shard-display');
+  if(nukeShards>0&&nukeShards<NUKE_NEED){
+    el.textContent=`🌟 碎片 ${nukeShards}/${NUKE_NEED}`;
+    el.style.opacity='1';
+  }else if(nukeShards>=NUKE_NEED){
+    el.textContent=`🌟 全爆就緒！`;
+    el.style.opacity='1';
+  }else{
+    el.style.opacity='0';
+  }
+}
+
+function showItemToast(item){
+  const el=document.getElementById('item-toast');
+  el.textContent=`${item.emoji} ${item.name}！${item.desc}`;
+  el.style.opacity='1';
+  setTimeout(()=>{el.style.opacity='0';},1300);
+}
+
+function showMsg(title,text,btns){
+  const box=document.getElementById('msgbox');
+  document.getElementById('mt').textContent=title;
+  document.getElementById('mp').textContent=text;
+  const bc=document.getElementById('mb');bc.innerHTML='';
+  btns.forEach(b=>{const btn=document.createElement('button');btn.textContent=b.l;if(b.cls)btn.className=b.cls;btn.onclick=()=>{initAudio();box.style.display='none';b.a();};bc.appendChild(btn);});
+  box.style.display='block';
+}
+
+// ===== MISS FEEDBACK =====
+function spawnMissParticles(x,y){
+  for(let i=0;i<6;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=2+Math.random()*3;
+    particles.push({
+      x,y,
+      vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      sz:3+Math.random()*4,a:0.7,r:0,
+      c:'rgba(255,80,80,0.7)'
+    });
+  }
+}
+
+// ===== GAME LOGIC =====
+function smashGlass(idx){
+  const g=glasses[idx];
+  if(!g||g.broken)return;
+  g.smash();
+
+  // Combo logic — reset after 1.2s of inactivity
+  combo++;
+  if(comboTimer)clearTimeout(comboTimer);
+  comboTimer=setTimeout(()=>resetCombo(),1200);
+  updateComboDisplay();
+  // Every 15 hits: trigger combo bomb
+  if(combo>0&&combo%15===0){
+    const bx=g.cx,by=g.cy;
+    setTimeout(()=>comboBomb(bx,by),120);
+  }
+
+  // Score: base 10, +2 per combo level (caps at ×4)
+  const multiplier=Math.min(4,1+Math.floor(combo/3)*0.5);
+  const points=Math.round(10*multiplier);
+  score+=points;
+
+  sndShatter();
+  shake=Math.min(12,5);
+
+  if(g.item&&!g.item.isNukeShard){
+    sndItem();
+    showItemToast(g.item);
+    const row=Math.floor(idx/buildingCols),col=idx%buildingCols;
+    const targets=g.item.action(row,col,buildingCols,buildingRows);
+    let delay=100;
+    for(const ti of targets){
+      if(ti!==idx&&ti>=0&&ti<glasses.length&&!glasses[ti].broken){
+        ((t,d)=>{setTimeout(()=>{
+          if(!glasses[t].broken){glasses[t].smash();score+=15;shake=Math.min(15,shake+2);sndCrack();updateHUD();}
+        },d);})(ti,delay);
+        delay+=50;
+      }
+    }
+    sndBoom();shake=15;
+  }
+  saveHighScore();
+  updateHUD();
+  setTimeout(()=>{
+    if(gameState==='playing'&&glasses.every(g=>g.broken)){
+      sndWin();score+=500*round;round++;onRoundComplete('');
+    }
+  },600);
+}
+
+function shoot(tx,ty){
+  if(gameState!=='playing')return;
+  initAudio();
+  let best=null,bestD=Infinity;
+  for(const g of glasses){
+    if(g.broken)continue;
+    if(!g.hitTest(tx,ty))continue;
+    const dx=tx-g.cx,dy=ty-g.cy;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d<bestD){bestD=d;best=g;}
+  }
+  if(!best){
+    // Miss — visual + sound feedback
+    spawnMissParticles(tx,ty);
+    sndMiss();
+    resetCombo();
+    return;
+  }
+  const bx=best.cx,by=best.cy;
+  projectiles.push(new Proj(tx,canvas.height+20,bx,by,'🪨',24));
+  const dist=Math.sqrt((tx-bx)**2+(canvas.height+20-by)**2);
+  const delay=Math.max(60,(dist/26)*16);
+  setTimeout(()=>smashGlass(best.idx),delay);
+}
+
+function startGame(){
+  score=0;round=1;highScore=parseInt(localStorage.getItem('glassHighScore')||'0');
+  buildBuilding();
+  gameState='playing';
+}
+
+function comboBomb(cx,cy){
+  sndMegaBoom();shake=25;
+  showItemToast({emoji:'💥',name:'COMBO 炸彈',desc:'連擊15次自動引爆！'});
+  const radius=Math.min(canvas.width,canvas.height)*0.32;
+  const targets=glasses.filter(g=>!g.broken&&Math.sqrt((g.cx-cx)**2+(g.cy-cy)**2)<radius);
+  // Big burst particles — all at once
+  for(let i=0;i<60;i++){
+    const angle=Math.random()*Math.PI*2,speed=6+Math.random()*16;
+    particles.push({x:cx,y:cy,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      sz:5+Math.random()*14,a:1,r:Math.random()*6.28,c:`hsl(${Math.random()*60},100%,65%)`});
+  }
+  // Smash ALL targets simultaneously
+  for(const g of targets){
+    if(!g.broken){g.smash();score+=15;}
+  }
+  updateHUD();
+  setTimeout(()=>{
+    if(gameState==='playing'&&glasses.every(g=>g.broken)){
+      sndWin();score+=500*round;round++;onRoundComplete('');
+    }
+  },400);
+}
+
+function nukeAll(){
+  if(gameState!=='playing')return;
+  document.getElementById('nuke-btn').style.display='none';
+  document.getElementById('shard-display').style.opacity='0';
+  sndBoom();shake=20;
+  const remaining=glasses.filter(g=>!g.broken);
+  let delay=0;
+  const cx=canvas.width/2,cy=canvas.height/2;
+  remaining.sort((a,b)=>{
+    const da=Math.sqrt((a.cx-cx)**2+(a.cy-cy)**2);
+    const db=Math.sqrt((b.cx-cx)**2+(b.cy-cy)**2);
+    return da-db;
+  });
+  for(const g of remaining){
+    ((gl,d)=>{setTimeout(()=>{
+      if(!gl.broken){gl.smash();score+=20;shake=Math.min(20,shake+1);
+        if(d%3===0)sndCrack();updateHUD();}
+    },d);})(g,delay);
+    delay+=20;
+  }
+  setTimeout(()=>{
+    if(glasses.every(g=>g.broken)){
+      sndWin();score+=1000*round;round++;onRoundComplete('全爆加分！');
+    }
+  },delay+300);
+}
+
+function showMenu(){
+  gameState='menu';
+  highScore=parseInt(localStorage.getItem('glassHighScore')||'0');
+  buildBuilding();
+  showMsg('🏢 砸玻璃大挑戰',
+    '點擊玻璃，砸碎整棟大樓！\n\n🪨 點擊玻璃直接砸碎（多指同時支援）\n💣🔨⚡🌊☄️ 隱藏道具一次砸一大片\n🌟 集滿 5 個全爆碎片 → 手動引爆！\n✨ 連擊 15 次自動引爆 COMBO 炸彈！\n🏗️ 20 種 3D 大樓造型，越後期越多塊！\n\n🏆 最高分：'+(highScore||0),
+    [{l:'開始砸！',a:startGame}]);
+}
+</script>
+<script>
+// ===== INPUT =====
+canvas.addEventListener('mousemove',e=>{mouseX=e.clientX;mouseY=e.clientY;});
+canvas.addEventListener('click',e=>{shoot(e.clientX,e.clientY);});
+// Multi-touch: fire shoot() for every finger simultaneously
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();initAudio();
+  for(let i=0;i<e.changedTouches.length;i++){
+    const t=e.changedTouches[i];
+    shoot(t.clientX,t.clientY);
+  }
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{e.preventDefault();},{passive:false});
+canvas.addEventListener('touchend',e=>{e.preventDefault();},{passive:false});
+
+// ===== CROSSHAIR =====
+function drawCrosshair(){
+  if(gameState!=='playing'||isTouch)return;
+  const x=mouseX,y=mouseY;
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(x,y,16,0,6.28);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x-22,y);ctx.lineTo(x-8,y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+8,y);ctx.lineTo(x+22,y);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y-22);ctx.lineTo(x,y-8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,y+8);ctx.lineTo(x,y+22);ctx.stroke();
+  ctx.fillStyle='rgba(255,80,80,0.8)';ctx.beginPath();ctx.arc(x,y,2,0,6.28);ctx.fill();
+  ctx.restore();
+}
+
+// ===== MAIN LOOP =====
+function loop(time){
+  ctx.save();
+  if(shake>0){ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);shake*=0.85;if(shake<0.3)shake=0;}
+  drawScene(time);
+  for(const p of projectiles){p.update();p.draw();}
+  projectiles=projectiles.filter(p=>p.alive);
+  for(const p of particles){
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.25;p.a-=0.015;p.r+=0.1;
+    ctx.save();ctx.globalAlpha=Math.max(0,p.a);ctx.translate(p.x,p.y);ctx.rotate(p.r);
+    ctx.fillStyle=p.c;ctx.fillRect(-p.sz/2,-p.sz/2,p.sz,p.sz);ctx.restore();
+  }
+  particles=particles.filter(p=>p.a>0);
+  drawCrosshair();
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+showMenu();
+
+// ===== SERVICE WORKER =====
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js?v=2').catch(()=>{});
+  });
+}
+
+// ===== NICKNAME =====
+let playerName=localStorage.getItem('glassPlayerName')||'';
+
+function getOrAskNickname(callback){
+  if(playerName){callback(playerName);return;}
+  const modal=document.getElementById('nickname-modal');
+  const input=document.getElementById('nickname-input');
+  const btn=document.getElementById('nickname-confirm-btn');
+  modal.classList.remove('hidden');
+  setTimeout(()=>input.focus(),100);
+  function confirm(){
+    const v=input.value.trim().slice(0,20);
+    if(!v)return;
+    playerName=v;
+    localStorage.setItem('glassPlayerName',playerName);
+    modal.classList.add('hidden');
+    callback(playerName);
+  }
+  btn.onclick=confirm;
+  input.onkeydown=(e)=>{if(e.key==='Enter')confirm();};
+}
+
+// ===== LEADERBOARD API =====
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+const API='https://glass-smash-api.ating.workers.dev';
+
+async function submitScore(name,scoreVal,roundVal){
+  try{
+    const res=await fetch(API+'/scores',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,score:scoreVal,round:roundVal})
+    });
+    if(!res.ok)return null;
+    const j=await res.json();
+    return j.rank??null;
+  }catch{return null;}
+}
+
+async function fetchTopScores(){
+  try{
+    const res=await fetch(API+'/scores/top');
+    if(!res.ok)return[];
+    const j=await res.json();
+    return j.data||[];
+  }catch{return[];}
+}
+
+function showLeaderboard(userRank){
+  const modal=document.getElementById('lb-modal');
+  const statusEl=document.getElementById('lb-status');
+  const listEl=document.getElementById('lb-list');
+  modal.classList.remove('hidden');
+  statusEl.textContent=userRank?`✨ 你的本次排名：第 ${userRank} 名！`:'';
+  listEl.innerHTML='<li style="justify-content:center;color:#666;padding:16px 0">載入中...</li>';
+  fetchTopScores().then(data=>{
+    listEl.innerHTML='';
+    if(!data.length){
+      listEl.innerHTML='<li style="justify-content:center;color:#666;padding:16px 0">尚無紀錄，快成為第一名！</li>';
+      return;
+    }
+    const medals=['🥇','🥈','🥉'];
+    data.forEach((row,i)=>{
+      const li=document.createElement('li');
+      if(i<3)li.className=`top-${i+1}`;
+      li.innerHTML=`<span class="lb-rank">${medals[i]||(i+1)}</span><span class="lb-name">${escapeHtml(row.name)}</span><span class="lb-score">${Number(row.score).toLocaleString()}</span><span class="lb-round">第${row.round}棟</span>`;
+      listEl.appendChild(li);
+    });
+  });
+  document.getElementById('lb-close-btn').onclick=()=>modal.classList.add('hidden');
+}
+
+// ===== ROUND COMPLETE =====
+function onRoundComplete(bonusLabel){
+  saveHighScore();
+  updateHUD();
+  const currentScore=score;
+  const currentRound=round-1;
+  const titleText=`🏗️ 第 ${currentRound} 棟大樓已拆除！`;
+  const bodyText=`${bonusLabel?bonusLabel+'\n':''}分數：${currentScore.toLocaleString()}\n最高分：${highScore.toLocaleString()}\n準備下一棟...`;
+  showMsg(titleText,bodyText,[
+    {l:'繼續拆！',a:()=>{buildBuilding();gameState='playing';}},
+    {l:'🏆 排行榜',a:()=>{
+      getOrAskNickname(name=>{
+        submitScore(name,currentScore,currentRound).then(rank=>{
+          showLeaderboard(rank);
+        });
+      });
+    },cls:'lb-btn'}
+  ]);
+  gameState='done';
+}
+</script>
+</body>
+</html>
