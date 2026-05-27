@@ -87,6 +87,11 @@ export default {
     // ── API 路由 ──────────────────────────────────
     if (path.startsWith('/api/')) {
 
+      // 健康檢查：不需要 Origin（方便監控和測試）
+      if (path === '/api/ping' && method === 'GET') {
+        return json({ ok: true, message: 'pong', ts: Date.now() });
+      }
+
       // CORS preflight
       if (method === 'OPTIONS') {
         if (!isAllowedOrigin(origin)) return new Response(null, { status: 403 });
