@@ -1,5 +1,5 @@
-// _worker.js — Cloudflare Pages Advanced Mode Worker
-// 攔截所有請求：/api/* 走 API 邏輯，其餘服務靜態資源
+// glass-smash-api Worker
+// 部署方式：Cloudflare Dashboard → Workers → 貼上此檔案
 
 const ALLOWED_ORIGINS = ['https://glass-smash.pages.dev'];
 
@@ -19,10 +19,10 @@ function corsHeaders(origin) {
   };
 }
 
-function json(data, status = 200, extra = {}) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...extra },
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...extraHeaders },
   });
 }
 
@@ -31,7 +31,7 @@ async function sha256hex(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const NAME_RE = /^[一-鿿぀-ヿ가-힯a-zA-Z0-9 _\-!?~^*#@%&+.]+$/u;
+const NAME_RE = /^[一-鿿぀-ヿ가-힣a-zA-Z0-9 _\-!?.]+$/u;
 
 async function handlePostScores(request, env) {
   let body;
@@ -84,41 +84,31 @@ export default {
     const method = request.method;
     const origin = request.headers.get('Origin') || '';
 
-    // ── API 路由 ──────────────────────────────────
-    if (path.startsWith('/api/')) {
-
-      // 健康檢查：不需要 Origin（方便監控和測試）
-      if (path === '/api/ping' && method === 'GET') {
-        return json({ ok: true, message: 'pong', ts: Date.now() });
-      }
-
-      // CORS preflight
-      if (method === 'OPTIONS') {
-        if (!isAllowedOrigin(origin)) return new Response(null, { status: 403 });
-        return new Response(null, { status: 204, headers: corsHeaders(origin) });
-      }
-
-      if (!isAllowedOrigin(origin)) return json({ ok: false, error: 'Forbidden' }, 403);
-      const cors = corsHeaders(origin);
-
-      let res;
-      if (path === '/api/ping' && method === 'GET') {
-        res = json({ ok: true, message: 'pong', ts: Date.now() });
-      } else if (path === '/api/scores' && method === 'POST') {
-        res = await handlePostScores(request, env);
-      } else if (path === '/api/scores/top' && method === 'GET') {
-        res = await handleGetTop(env);
-      } else {
-        res = json({ ok: false, error: 'Not found' }, 404);
-      }
-
-      const headers = new Headers(res.headers);
-      Object.entries(cors).forEach(([k, v]) => headers.set(k, v));
-      headers.set('Cache-Control', 'no-store');
-      return new Response(res.body, { status: res.status, headers });
+    // Health check（開放）
+    if (path === '/ping' && method === 'GET') {
+      return json({ ok: true, message: 'pong', ts: Date.now() });
     }
 
-    // ── 靜態資源（交回 Pages 處理）───────────────
-    return env.ASSETS.fetch(request);
+    // CORS preflight
+    if (method === 'OPTIONS') {
+      if (!isAllowedOrigin(origin)) return new Response(null, { status: 403 });
+      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+    }
+
+    if (!isAllowedOrigin(origin)) return json({ ok: false, error: 'Forbidden' }, 403);
+    const cors = corsHeaders(origin);
+
+    let res;
+    if (path === '/scores' && method === 'POST') {
+      res = await handlePostScores(request, env);
+    } else if (path === '/scores/top' && method === 'GET') {
+      res = await handleGetTop(env);
+    } else {
+      res = json({ ok: false, error: 'Not found' }, 404);
+    }
+
+    const headers = new Headers(res.headers);
+    Object.entries(cors).forEach(([k, v]) => headers.set(k, v));
+    return new Response(res.body, { status: res.status, headers });
   },
 };

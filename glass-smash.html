@@ -860,9 +860,11 @@ function escapeHtml(s){
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+const API='https://glass-smash-api.ating.workers.dev';
+
 async function submitScore(name,scoreVal,roundVal){
   try{
-    const res=await fetch('/api/scores',{
+    const res=await fetch(API+'/scores',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({name,score:scoreVal,round:roundVal})
@@ -875,7 +877,7 @@ async function submitScore(name,scoreVal,roundVal){
 
 async function fetchTopScores(){
   try{
-    const res=await fetch('/api/scores/top');
+    const res=await fetch(API+'/scores/top');
     if(!res.ok)return[];
     const j=await res.json();
     return j.data||[];
