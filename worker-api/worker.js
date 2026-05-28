@@ -64,15 +64,21 @@ async function handlePostScores(request, env) {
   await env.DB.prepare('INSERT INTO scores (name, score, round, created_at) VALUES (?, ?, ?, ?)')
     .bind(cleanName, score, round, Math.floor(now / 1000)).run();
 
-  const rankResult = await env.DB.prepare('SELECT COUNT(*) + 1 AS rank FROM scores WHERE score > ?')
-    .bind(score).first();
+  const rankResult = await env.DB.prepare(
+    'SELECT COUNT(*) + 1 AS rank FROM (SELECT MAX(score) AS ms FROM scores GROUP BY name) WHERE ms > ?'
+  ).bind(score).first();
 
   return json({ ok: true, rank: rankResult?.rank ?? 1 });
 }
 
 async function handleGetTop(env) {
   const result = await env.DB.prepare(
-    'SELECT name, score, round FROM scores ORDER BY score DESC LIMIT 10'
+    `SELECT name, MAX(score) AS score,
+       (SELECT round FROM scores s2 WHERE s2.name = s1.name ORDER BY score DESC LIMIT 1) AS round
+     FROM scores s1
+     GROUP BY name
+     ORDER BY MAX(score) DESC
+     LIMIT 10`
   ).all();
   return json({ ok: true, data: result.results ?? [] }, 200, { 'Cache-Control': 'no-store' });
 }
