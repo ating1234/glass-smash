@@ -884,7 +884,7 @@ async function fetchTopScores(){
   }catch{return[];}
 }
 
-function showLeaderboard(userRank){
+function showLeaderboard(userRank, onClose){
   const modal=document.getElementById('lb-modal');
   const statusEl=document.getElementById('lb-status');
   const listEl=document.getElementById('lb-list');
@@ -905,7 +905,10 @@ function showLeaderboard(userRank){
       listEl.appendChild(li);
     });
   });
-  document.getElementById('lb-close-btn').onclick=()=>modal.classList.add('hidden');
+  document.getElementById('lb-close-btn').onclick=()=>{
+    modal.classList.add('hidden');
+    if(onClose) onClose();
+  };
 }
 
 // ===== ROUND COMPLETE =====
@@ -921,7 +924,7 @@ function onRoundComplete(bonusLabel){
     {l:'🏆 排行榜',a:()=>{
       getOrAskNickname(name=>{
         submitScore(name,currentScore,currentRound).then(rank=>{
-          showLeaderboard(rank);
+          showLeaderboard(rank,()=>{buildBuilding();gameState='playing';});
         });
       });
     },cls:'lb-btn'}
