@@ -31,7 +31,7 @@ async function sha256hex(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-const NAME_RE = /^[\p{L}\p{N} _\-!?.]+$/u;
+const NAME_RE = /^[\p{L}\p{N}\p{Extended_Pictographic} _\-!?.]+$/u;
 
 async function handlePostScores(request, env) {
   let body;
