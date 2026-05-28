@@ -876,7 +876,7 @@ async function submitScore(name,scoreVal,roundVal){
 
 async function fetchTopScores(){
   try{
-    const res=await fetch(API+'/scores/top');
+    const res=await fetch(API+'/scores/top?t='+Date.now(),{cache:'no-store'});
     if(!res.ok)return[];
     const j=await res.json();
     return j.data||[];

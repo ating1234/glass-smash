@@ -74,7 +74,7 @@ async function handleGetTop(env) {
   const result = await env.DB.prepare(
     'SELECT name, score, round FROM scores ORDER BY score DESC LIMIT 10'
   ).all();
-  return json({ ok: true, data: result.results ?? [] }, 200, { 'Cache-Control': 'public, max-age=30' });
+  return json({ ok: true, data: result.results ?? [] }, 200, { 'Cache-Control': 'no-store' });
 }
 
 export default {
