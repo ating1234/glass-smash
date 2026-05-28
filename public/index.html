@@ -20,14 +20,16 @@
 <meta property="og:url" content="https://glass-smash.pages.dev">
 <meta property="og:title" content="砸玻璃大挑戰 — 免費瀏覽器小遊戲">
 <meta property="og:description" content="用石頭砸碎玻璃大樓！收集碎片觸發全爆特效，挑戰全球排行榜。完全免費，無需下載。">
-<meta property="og:image" content="https://glass-smash.pages.dev/icons/icon-512.png">
+<meta property="og:image" content="https://glass-smash.pages.dev/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="zh_TW">
 <meta property="og:site_name" content="砸玻璃大挑戰">
 <!-- Twitter / X Card -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="砸玻璃大挑戰 — 免費瀏覽器小遊戲">
 <meta name="twitter:description" content="用石頭砸碎玻璃大樓！收集碎片觸發全爆，挑戰全球排行榜。">
-<meta name="twitter:image" content="https://glass-smash.pages.dev/icons/icon-512.png">
+<meta name="twitter:image" content="https://glass-smash.pages.dev/og-image.png">
 <!-- JSON-LD 結構化資料（Google / AI 理解用） -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"VideoGame","name":"砸玻璃大挑戰","alternateName":"Glass Smash Challenge","description":"用石頭砸碎一棟棟玻璃大樓，收集碎片觸發全爆特效，闖關挑戰全球排行榜的免費瀏覽器遊戲。","url":"https://glass-smash.pages.dev","image":"https://glass-smash.pages.dev/icons/icon-512.png","genre":["休閒遊戲","Casual","Arcade"],"gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","inLanguage":"zh-TW","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"TWD","availability":"https://schema.org/InStock"}}
@@ -131,6 +133,20 @@ canvas{display:block;width:100%;height:100%}
   </div>
 </div>
 <a id="mail-link" href="mailto:aing123@gmail.com" title="建議回饋">✉️</a>
+<!-- SEO description for crawlers — hidden visually, readable by search engines & AI -->
+<article aria-hidden="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;pointer-events:none">
+  <h1>砸玻璃大挑戰 — 免費 HTML5 瀏覽器小遊戲</h1>
+  <p>砸玻璃大挑戰是一款完全免費、無需下載的 HTML5 瀏覽器遊戲。玩家用石頭點擊或觸碰螢幕，砸碎一棟棟玻璃帷幕大樓的每一片玻璃。連擊可獲得 Combo 加分，收集足夠碎片後觸發全爆（Nuke）特效，一次炸光整棟大樓。完成後自動進入下一棟，分數累積記入即時全球排行榜。支援手機與電腦，無廣告、無內購，開啟即玩。</p>
+  <ul>
+    <li>遊玩網址：https://glass-smash.pages.dev</li>
+    <li>類型：休閒遊戲、破壞遊戲、Casual Game</li>
+    <li>平台：Web 瀏覽器（Chrome、Safari、Firefox 皆支援）</li>
+    <li>費用：完全免費</li>
+    <li>功能：全球排行榜、PWA 離線支援、Combo 連擊系統、Nuke 全爆特效</li>
+    <li>語言：繁體中文</li>
+  </ul>
+</article>
+<noscript><p>砸玻璃大挑戰：免費 HTML5 瀏覽器小遊戲，點擊砸碎玻璃大樓，挑戰全球排行榜。請啟用 JavaScript 以遊玩。</p></noscript>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 if(!ctx.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};}
