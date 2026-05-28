@@ -67,8 +67,8 @@ canvas{display:block;width:100%;height:100%}
 .lb-round{color:#888;font-size:11px;margin-left:4px;flex-shrink:0}
 #lb-close-btn,#nickname-confirm-btn{padding:10px 30px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;cursor:pointer;margin:4px;font-family:inherit}
 #lb-close-btn:hover,#nickname-confirm-btn:hover{background:linear-gradient(135deg,#27ae60,#1e8449)}
-#mail-link{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom));right:calc(10px + env(safe-area-inset-right));font-size:16px;opacity:0.35;text-decoration:none;pointer-events:auto;z-index:50;transition:opacity 0.2s}
-#mail-link:hover{opacity:0.85}
+#mail-link{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));right:calc(12px + env(safe-area-inset-right));font-size:18px;line-height:1;opacity:0.45;text-decoration:none;pointer-events:auto;z-index:9999;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent}
+#mail-link:hover{opacity:0.9}
 </style>
 </head>
 <body>
@@ -110,7 +110,7 @@ canvas{display:block;width:100%;height:100%}
     <button id="lb-close-btn">關閉</button>
   </div>
 </div>
-<a id="mail-link" href="mailto:aing123@gmail.com" title="建議回饋">✉</a>
+<a id="mail-link" href="mailto:aing123@gmail.com" title="建議回饋">✉️</a>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 if(!ctx.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};}
