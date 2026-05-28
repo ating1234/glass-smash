@@ -93,6 +93,7 @@ canvas{display:block;width:100%;height:100%}
 #lb-share-btn{padding:10px 30px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#2980b9,#1a5276);color:#fff;cursor:pointer;margin:4px;font-family:inherit}
 #lb-share-btn:hover{background:linear-gradient(135deg,#1a5276,#0d2b4a)}
 #lb-share-toast{font-size:13px;color:#7df;margin:6px 0 0;min-height:18px;transition:opacity 0.4s;opacity:0}
+.hidden{display:none}
 #mail-link{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));right:calc(12px + env(safe-area-inset-right));font-size:18px;line-height:1;opacity:0.45;text-decoration:none;pointer-events:auto;z-index:9999;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent}
 #mail-link:hover{opacity:0.9}
 </style>
@@ -946,14 +947,19 @@ function showLeaderboard(userRank, shareScore, shareRound, onClose){
     shareBtn.onclick=()=>{
       const rankPart=userRank?`排名第 ${userRank} 名 🏆`:'快來挑戰！';
       const text=`我在《砸玻璃大挑戰》拆了 ${shareRound} 棟大樓，拿下 ${shareScore.toLocaleString()} 分，${rankPart}\n👉 https://glass-smash.pages.dev`;
-      if(navigator.share){
+      const isTouchDevice=window.matchMedia('(pointer:coarse)').matches;
+      if(isTouchDevice&&navigator.share){
         navigator.share({text}).catch(()=>{});
       }else{
         navigator.clipboard.writeText(text).then(()=>{
           shareToast.textContent='✅ 已複製到剪貼簿！';
           shareToast.style.opacity='1';
           setTimeout(()=>{shareToast.style.opacity='0';},2500);
-        }).catch(()=>{});
+        }).catch(()=>{
+          shareToast.textContent='⚠️ 請手動複製成績';
+          shareToast.style.opacity='1';
+          setTimeout(()=>{shareToast.style.opacity='0';},2500);
+        });
       }
     };
   }else{
