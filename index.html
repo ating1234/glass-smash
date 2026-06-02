@@ -11,8 +11,30 @@
 <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png?v=2">
 <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png?v=2">
 <meta name="theme-color" content="#111111">
-
-<title>砸玻璃大挑戰</title>
+<title>砸玻璃大挑戰 — 免費瀏覽器小遊戲</title>
+<meta name="description" content="用石頭砸碎一棟棟玻璃大樓！收集碎片觸發全爆特效，闖關挑戰全球排行榜。免費、無需下載，手機電腦即開即玩的 HTML5 小遊戲。">
+<meta name="keywords" content="砸玻璃,小遊戲,免費遊戲,瀏覽器遊戲,HTML5遊戲,破壞遊戲,休閒遊戲,排行榜">
+<link rel="canonical" href="https://glass-smash.pages.dev">
+<meta name="google-site-verification" content="RgUqsSiiB5H8ZMfvM00m6Fc_dnrAXmh_SxZfJCQNjOg">
+<!-- Open Graph（LINE / Facebook 分享預覽） -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://glass-smash.pages.dev">
+<meta property="og:title" content="砸玻璃大挑戰 — 免費瀏覽器小遊戲">
+<meta property="og:description" content="用石頭砸碎玻璃大樓！收集碎片觸發全爆特效，挑戰全球排行榜。完全免費，無需下載。">
+<meta property="og:image" content="https://glass-smash.pages.dev/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:site_name" content="砸玻璃大挑戰">
+<!-- Twitter / X Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="砸玻璃大挑戰 — 免費瀏覽器小遊戲">
+<meta name="twitter:description" content="用石頭砸碎玻璃大樓！收集碎片觸發全爆，挑戰全球排行榜。">
+<meta name="twitter:image" content="https://glass-smash.pages.dev/og-image.png">
+<!-- JSON-LD 結構化資料（Google / AI 理解用） -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoGame","name":"砸玻璃大挑戰","alternateName":"Glass Smash Challenge","description":"用石頭砸碎一棟棟玻璃大樓，收集碎片觸發全爆特效，闖關挑戰全球排行榜的免費瀏覽器遊戲。","url":"https://glass-smash.pages.dev","image":"https://glass-smash.pages.dev/icons/icon-512.png","genre":["休閒遊戲","Casual","Arcade"],"gamePlatform":"Web Browser","applicationCategory":"Game","operatingSystem":"Any","inLanguage":"zh-TW","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"TWD","availability":"https://schema.org/InStock"}}
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;touch-action:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
@@ -68,11 +90,20 @@ canvas{display:block;width:100%;height:100%}
 .lb-round{color:#888;font-size:11px;margin-left:4px;flex-shrink:0}
 #lb-close-btn,#nickname-confirm-btn{padding:10px 30px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;cursor:pointer;margin:4px;font-family:inherit}
 #lb-close-btn:hover,#nickname-confirm-btn:hover{background:linear-gradient(135deg,#27ae60,#1e8449)}
+#lb-share-btn{padding:10px 30px;font-size:15px;border:none;border-radius:10px;background:linear-gradient(135deg,#2980b9,#1a5276);color:#fff;cursor:pointer;margin:4px;font-family:inherit}
+#lb-share-btn:hover{background:linear-gradient(135deg,#1a5276,#0d2b4a)}
+#lb-share-toast{font-size:13px;color:#7df;margin:6px 0 0;min-height:18px;transition:opacity 0.4s;opacity:0}
+.hidden{display:none}
+#mail-link{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));right:calc(12px + env(safe-area-inset-right));font-size:18px;line-height:1;opacity:0.45;text-decoration:none;pointer-events:auto;z-index:9999;cursor:pointer;transition:opacity 0.2s;-webkit-tap-highlight-color:transparent}
+#mail-link:hover{opacity:0.9}
+#lang-toggle-btn{position:absolute;top:calc(8px + env(safe-area-inset-top));right:16px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 12px;border-radius:16px;font-size:13px;cursor:pointer;z-index:100;pointer-events:auto;transition:background 0.2s}
+#lang-toggle-btn:hover{background:rgba(50,50,50,0.8)}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="ui">
+  <button id="lang-toggle-btn" onclick="toggleLanguage()">EN</button>
   <div id="hud">
     <span id="hs">🪟 0 / 0</span>
     <span id="hp">分數 0</span>
@@ -82,7 +113,7 @@ canvas{display:block;width:100%;height:100%}
   <div id="combo-display"></div>
   <div id="shard-display"></div>
   <div id="nuke-btn">
-    <button onclick="nukeAll()">💥 全部爆破！</button>
+    <button id="nuke-btn-inner" onclick="nukeAll()">💥 全部爆破！</button>
   </div>
   <div id="item-toast"></div>
   <div id="tool-bar">🪨 點擊砸玻璃</div>
@@ -92,9 +123,9 @@ canvas{display:block;width:100%;height:100%}
 <!-- 暱稱輸入 Modal -->
 <div id="nickname-modal" class="hidden">
   <div id="nickname-box">
-    <h2>👤 輸入你的暱稱</h2>
-    <p>用來顯示在全球排行榜<br>最多 20 個字</p>
-    <p style="font-size:11px;color:#888;margin-top:-10px;margin-bottom:14px;line-height:1.5">暱稱即身份 — 輸入相同名字代表同一位玩家</p>
+    <h2 id="nick-title">👤 輸入你的暱稱</h2>
+    <p id="nick-desc">用來顯示在全球排行榜<br>最多 20 個字</p>
+    <p id="nick-sub-desc" style="font-size:11px;color:#888;margin-top:-10px;margin-bottom:14px;line-height:1.5">暱稱即身份 — 輸入相同名字代表同一位玩家</p>
     <input id="nickname-input" type="text" maxlength="20" placeholder="你的暱稱...">
     <button id="nickname-confirm-btn">確認 ✓</button>
   </div>
@@ -103,12 +134,31 @@ canvas{display:block;width:100%;height:100%}
 <!-- 排行榜 Modal -->
 <div id="lb-modal" class="hidden">
   <div id="lb-box">
-    <h2>🏆 全球排行榜</h2>
+    <h2 id="lb-title">🏆 全球排行榜</h2>
     <p id="lb-status"></p>
     <ul id="lb-list"></ul>
-    <button id="lb-close-btn">關閉</button>
+    <div>
+      <button id="lb-share-btn" class="hidden">📤 分享成績</button>
+      <button id="lb-close-btn">關閉</button>
+    </div>
+    <p id="lb-share-toast"></p>
   </div>
 </div>
+<a id="mail-link" href="mailto:aing123@gmail.com" title="建議回饋">✉️</a>
+<!-- SEO description for crawlers — hidden visually, readable by search engines & AI -->
+<article aria-hidden="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;pointer-events:none">
+  <h1>砸玻璃大挑戰 — 免費 HTML5 瀏覽器小遊戲</h1>
+  <p>砸玻璃大挑戰是一款完全免費、無需下載的 HTML5 瀏覽器遊戲。玩家用石頭點擊或觸碰螢幕，砸碎一棟棟玻璃帷幕大樓的每一片玻璃。連擊可獲得 Combo 加分，收集足夠碎片後觸發全爆（Nuke）特效，一次炸光整棟大樓。完成後自動進入下一棟，分數累積記入即時全球排行榜。支援手機與電腦，無廣告、無內購，開啟即玩。</p>
+  <ul>
+    <li>遊玩網址：https://glass-smash.pages.dev</li>
+    <li>類型：休閒遊戲、破壞遊戲、Casual Game</li>
+    <li>平台：Web 瀏覽器（Chrome、Safari、Firefox 皆支援）</li>
+    <li>費用：完全免費</li>
+    <li>功能：全球排行榜、PWA 離線支援、Combo 連擊系統、Nuke 全爆特效</li>
+    <li>語言：繁體中文</li>
+  </ul>
+</article>
+<noscript><p>砸玻璃大挑戰：免費 HTML5 瀏覽器小遊戲，點擊砸碎玻璃大樓，挑戰全球排行榜。請啟用 JavaScript 以遊玩。</p></noscript>
 <script>
 const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
 if(!ctx.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){r=Math.min(r,w/2,h/2);this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();};}
@@ -190,9 +240,212 @@ function sndMiss(){
 }
 </script>
 <script>
+// ===== I18N DICTIONARY =====
+const i18n = {
+  zh: {
+    langBtn: 'EN',
+    hudGlass: '🪟 {broken} / {total}',
+    hudScore: '分數 {score}',
+    hudRound: '第 {round} 棟',
+    hudHighScore: '🏆 {highScore}',
+    toolbarInit: '🪨 點擊砸玻璃',
+    toolbarBldg: '🏢 {bldgName}　🪨 點擊砸玻璃',
+    nukeBtn: '💥 全部爆破！',
+    toastNukeReady: '💥 全爆就緒！',
+    toastNukeDesc: '按下按鈕引爆整棟！',
+    toastComboDetonation: '🔥 {combo} COMBO！再 {toNext} 下爆炸！',
+    toastCombo: '✨ {combo} COMBO！',
+    toastComboBomb: '💥 COMBO 炸彈',
+    toastComboBombDesc: '連擊15次自動引爆！',
+    menuTitle: '🏢 砸玻璃大挑戰',
+    menuDesc: '點擊玻璃，砸碎整棟大樓！\n\n🪨 點擊玻璃直接砸碎（多指同時支援）\n💣🔨⚡🌊☄️ 隱藏道具一次砸一大片\n🌟 集滿 5 個全爆碎片 → 手動引爆！\n✨ 連擊 15 次自動引爆 COMBO 炸彈！\n🏗️ 20 種 3D 大樓造型，越後期越多塊！\n\n🏆 最高分：{highScore}',
+    menuBtn: '開始砸！',
+    nickTitle: '👤 輸入你的暱稱',
+    nickDesc: '用來顯示在全球排行榜<br>最多 20 個字',
+    nickSubDesc: '暱稱即身份 — 輸入相同名字代表同一位玩家',
+    nickPlaceholder: '你的暱稱...',
+    nickConfirm: '確認 ✓',
+    lbTitle: '🏆 全球排行榜',
+    lbRankMsg: '✨ 你的本次排名：第 {rank} 名！',
+    lbLoading: '載入中...',
+    lbEmpty: '尚無紀錄，快成為第一名！',
+    lbBldg: '第 {round} 棟',
+    lbClose: '關閉',
+    lbShare: '📤 分享成績',
+    shareCopied: '✅ 已複製到剪貼簿！',
+    shareManual: '⚠️ 請手動複製成績',
+    shareText: '我在《砸玻璃大挑戰》拆了 {round} 棟大樓，拿下 {score} 分，{rankText}\n👉 https://game.ating123.com',
+    shareRankText: '排名第 {rank} 名 🏆',
+    shareRankChallenge: '快來挑戰！',
+    allClearBonus: '全爆加分！',
+    winTitle: '🏗️ 第 {round} 棟大樓已拆除！',
+    winDesc: '{bonus}分數：{score}\n最高分：{highScore}\n準備下一棟...',
+    winKeepSmashing: '繼續拆！',
+    winLeaderboard: '🏆 排行榜',
+    itemBombName: '炸彈',
+    itemBombDesc: '炸碎周圍 3×3 玻璃',
+    itemHammerName: '巨鎚',
+    itemHammerDesc: '砸碎整排玻璃',
+    itemLightningName: '閃電',
+    itemLightningDesc: '隨機炸碎 12 片玻璃',
+    itemTsunamiName: '海嘯',
+    itemTsunamiDesc: '砸碎整列玻璃',
+    itemMeteorName: '隕石',
+    itemMeteorDesc: '砸碎隨機一大區域',
+    itemShardName: '全爆碎片',
+    itemShardDesc: '碎片',
+    shardProgress: '🌟 碎片 {shards}/{need}',
+    shardReady: '🌟 全爆就緒！'
+  },
+  en: {
+    langBtn: '繁中',
+    hudGlass: '🪟 {broken} / {total}',
+    hudScore: 'Score: {score}',
+    hudRound: 'Building {round}',
+    hudHighScore: '🏆 {highScore}',
+    toolbarInit: '🪨 Tap to break glass',
+    toolbarBldg: '🏢 {bldgName}　🪨 Tap to break glass',
+    nukeBtn: '💥 Detonate All!',
+    toastNukeReady: '💥 Nuke Ready!',
+    toastNukeDesc: 'Press the button to detonate the building!',
+    toastComboDetonation: '🔥 {combo} COMBO! {toNext} more to detonation!',
+    toastCombo: '✨ {combo} COMBO!',
+    toastComboBomb: '💥 Combo Bomb',
+    toastComboBombDesc: 'Detonates automatically at 15 combos!',
+    menuTitle: '🏢 Glass Smasher Challenge',
+    menuDesc: 'Tap glass panels to smash the entire building!\n\n🪨 Tap to break glass directly (supports multi-touch)\n💣🔨⚡🌊☄️ Hidden items to shatter huge areas\n🌟 Collect 5 Nuke Shards to detonate the building manually!\n✨ Reach 15 Combos to trigger the Auto Combo Bomb!\n🏗️ 20 styles of 3D buildings, with more blocks in later stages!\n\n🏆 High Score: {highScore}',
+    menuBtn: 'Start Smashing!',
+    nickTitle: '👤 Enter Your Nickname',
+    nickDesc: 'Will be displayed on the global leaderboard<br>Max 20 characters',
+    nickSubDesc: 'Nickname is identity — entering the same name represents the same player.',
+    nickPlaceholder: 'Your nickname...',
+    nickConfirm: 'Confirm ✓',
+    lbTitle: '🏆 Global Leaderboard',
+    lbRankMsg: '✨ Your Rank: No. {rank}!',
+    lbLoading: 'Loading...',
+    lbEmpty: 'No records yet. Be the first to join!',
+    lbBldg: 'Bldg {round}',
+    lbClose: 'Close',
+    lbShare: '📤 Share Score',
+    shareCopied: '✅ Copied to clipboard!',
+    shareManual: '⚠️ Please copy score manually',
+    shareText: 'I demolished {round} buildings in Glass Smasher, scoring {score} points, {rankText}\n👉 https://game.ating123.com',
+    shareRankText: 'ranking No. {rank} 🏆',
+    shareRankChallenge: 'come and beat me!',
+    allClearBonus: 'All Clear Bonus!',
+    winTitle: '🏗️ Building {round} Demolished!',
+    winDesc: '{bonus}Score: {score}\nHigh Score: {highScore}\nPreparing the next building...',
+    winKeepSmashing: 'Keep Smashing!',
+    winLeaderboard: '🏆 Leaderboard',
+    itemBombName: 'Bomb',
+    itemBombDesc: 'Shatter surrounding 3×3 glass',
+    itemHammerName: 'Hammer',
+    itemHammerDesc: 'Shatter an entire row of glass',
+    itemLightningName: 'Lightning',
+    itemLightningDesc: 'Shatter 12 random glass panels',
+    itemTsunamiName: 'Tsunami',
+    itemTsunamiDesc: 'Shatter an entire column of glass',
+    itemMeteorName: 'Meteor',
+    itemMeteorDesc: 'Shatter a large random area',
+    itemShardName: 'Nuke Shard',
+    itemShardDesc: 'Shard',
+    shardProgress: '🌟 Shard {shards}/{need}',
+    shardReady: '🌟 Nuke Ready!'
+  }
+};
+
+let currentLang = localStorage.getItem('ating_portal_lang') || 'zh';
+
+function updateSEO() {
+  const t = i18n[currentLang];
+  if (currentLang === 'zh') {
+    document.title = "砸玻璃大挑戰 — 免費瀏覽器小遊戲";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "用石頭砸碎一棟棟玻璃大樓！收集碎片觸發全爆特效，闖關挑戰全球排行榜。免費、無需下載，手機電腦即開即玩的 HTML5 小遊戲。");
+  } else {
+    document.title = "Glass Smasher — Free Browser Casual Game";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "Smash 3D glass buildings with stones! Collect shards to detonate all panels and challenge the global leaderboard. Free HTML5 game.");
+  }
+}
+
+function updateLanguage() {
+  const t = i18n[currentLang];
+  const langBtn = document.getElementById('lang-toggle-btn');
+  if(langBtn) langBtn.textContent = t.langBtn;
+  const nukeBtnInner = document.getElementById('nuke-btn-inner');
+  if(nukeBtnInner) nukeBtnInner.textContent = t.nukeBtn;
+  const nickTitle = document.getElementById('nick-title');
+  if(nickTitle) nickTitle.textContent = t.nickTitle;
+  const nickDesc = document.getElementById('nick-desc');
+  if(nickDesc) nickDesc.innerHTML = t.nickDesc;
+  const nickSubDesc = document.getElementById('nick-sub-desc');
+  if(nickSubDesc) nickSubDesc.textContent = t.nickSubDesc;
+  const nickInput = document.getElementById('nickname-input');
+  if(nickInput) nickInput.placeholder = t.nickPlaceholder;
+  const nickBtn = document.getElementById('nickname-confirm-btn');
+  if(nickBtn) nickBtn.textContent = t.nickConfirm;
+  const lbTitle = document.getElementById('lb-title');
+  if(lbTitle) lbTitle.textContent = t.lbTitle;
+  const lbClose = document.getElementById('lb-close-btn');
+  if(lbClose) lbClose.textContent = t.lbClose;
+  const lbShare = document.getElementById('lb-share-btn');
+  if(lbShare) lbShare.textContent = t.lbShare;
+
+  updateHUD();
+  updateShardDisplay();
+  updateSEO();
+
+  const toolBar = document.getElementById('tool-bar');
+  if (toolBar) {
+    if (gameState === 'playing' || gameState === 'done') {
+      const style = STYLES[buildStyle];
+      const bName = currentLang === 'zh' ? style.name : (style.nameEn || style.name);
+      toolBar.textContent = t.toolbarBldg.replace('{bldgName}', bName);
+    } else {
+      toolBar.textContent = t.toolbarInit;
+    }
+  }
+  
+  if (gameState === 'menu') {
+    showMenu();
+  }
+}
+
+function toggleLanguage() {
+  currentLang = currentLang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('ating_portal_lang', currentLang);
+  updateLanguage();
+}
+
+function getItemInfo(item){
+  if (!item) return { name: '', desc: '' };
+  if (item.name && item.desc && !item.actionKey && !item.isNukeShard) {
+    if (item.name === '全爆就緒！') {
+      return { name: i18n[currentLang].toastNukeReady, desc: i18n[currentLang].toastNukeDesc };
+    }
+    if (item.name === 'COMBO 炸彈') {
+      return { name: i18n[currentLang].toastComboBomb, desc: i18n[currentLang].toastComboBombDesc };
+    }
+    return { name: item.name, desc: item.desc };
+  }
+  if (item.isNukeShard) {
+    return {
+      name: i18n[currentLang].itemShardName,
+      desc: i18n[currentLang].itemShardDesc
+    };
+  }
+  const keyMap = {
+    bomb: { name: i18n[currentLang].itemBombName, desc: i18n[currentLang].itemBombDesc },
+    hammer: { name: i18n[currentLang].itemHammerName, desc: i18n[currentLang].itemHammerDesc },
+    lightning: { name: i18n[currentLang].itemLightningName, desc: i18n[currentLang].itemLightningDesc },
+    tsunami: { name: i18n[currentLang].itemTsunamiName, desc: i18n[currentLang].itemTsunamiDesc },
+    meteor: { name: i18n[currentLang].itemMeteorName, desc: i18n[currentLang].itemMeteorDesc }
+  };
+  return keyMap[item.actionKey] || { name: item.name || '', desc: item.desc || '' };
+}
+
 // ===== SPECIAL ITEMS =====
 const ITEMS=[
-  {emoji:'💣',name:'炸彈',desc:'炸碎周圍 3×3 玻璃',action:(row,col,cols,rows)=>{
+  {emoji:'💣',actionKey:'bomb',action:(row,col,cols,rows)=>{
     const targets=[];
     for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
       const r=row+dr,c=col+dc;
@@ -200,18 +453,18 @@ const ITEMS=[
     }
     return targets;
   }},
-  {emoji:'🔨',name:'巨鎚',desc:'砸碎整排玻璃',action:(row,col,cols,rows)=>{
+  {emoji:'🔨',actionKey:'hammer',action:(row,col,cols,rows)=>{
     const targets=[];for(let c=0;c<cols;c++)targets.push(row*cols+c);return targets;
   }},
-  {emoji:'⚡',name:'閃電',desc:'隨機炸碎 12 片玻璃',action:(row,col,cols,rows)=>{
+  {emoji:'⚡',actionKey:'lightning',action:(row,col,cols,rows)=>{
     const all=[];for(let i=0;i<rows*cols;i++)if(!glasses[i].broken)all.push(i);
     const targets=[];for(let i=0;i<Math.min(12,all.length);i++){const idx=Math.floor(Math.random()*all.length);targets.push(all.splice(idx,1)[0]);}
     return targets;
   }},
-  {emoji:'🌊',name:'海嘯',desc:'砸碎整列玻璃',action:(row,col,cols,rows)=>{
+  {emoji:'🌊',actionKey:'tsunami',action:(row,col,cols,rows)=>{
     const targets=[];for(let r=0;r<rows;r++)targets.push(r*cols+col);return targets;
   }},
-  {emoji:'☄️',name:'隕石',desc:'砸碎隨機一大區域',action:(row,col,cols,rows)=>{
+  {emoji:'☄️',actionKey:'meteor',action:(row,col,cols,rows)=>{
     const targets=[];const cr=row,cc=col,rad=2;
     for(let dr=-rad;dr<=rad;dr++)for(let dc=-rad;dc<=rad;dc++){
       const r=cr+dr,c=cc+dc;
@@ -237,10 +490,13 @@ let combo=0,comboTimer=null;
 function resetCombo(){combo=0;updateComboDisplay();}
 function updateComboDisplay(){
   const el=document.getElementById('combo-display');
+  const t = i18n[currentLang];
   if(combo>=3){
     const toNext=15-((combo-1)%15+1);
     const bombWarn=toNext<=3&&combo>=12;
-    el.textContent=bombWarn?`🔥 ${combo} COMBO！再${toNext}下爆炸！`:`✨ ${combo} COMBO！`;
+    el.textContent=bombWarn
+      ? t.toastComboDetonation.replace('{combo}', combo).replace('{toNext}', toNext)
+      : t.toastCombo.replace('{combo}', combo);
     el.style.opacity='1';
     el.style.color=bombWarn?'#ff6600':'#ff0';
     el.style.fontSize=Math.min(48,24+combo*2)+'px';
@@ -258,26 +514,26 @@ function saveHighScore(){
 
 // Building styles
 const STYLES=[
-  {name:'方格帷幕',frame:'#2a3a4a',accent:'#3a5a6a',bg1:'#0a0a2e',bg2:'#1a1a4e',layout:'rect'},
-  {name:'三角稜鏡',frame:'#3a2a4a',accent:'#6a3a7a',bg1:'#1a0a2e',bg2:'#2e1a4e',layout:'tri'},
-  {name:'蜂巢大樓',frame:'#2a4a3a',accent:'#3a7a5a',bg1:'#0a2e1a',bg2:'#1a4e2e',layout:'hex'},
-  {name:'菱形水晶',frame:'#4a3a2a',accent:'#7a5a3a',bg1:'#2e1a0a',bg2:'#4e2e1a',layout:'diamond'},
-  {name:'圓形泡泡',frame:'#2a3a4a',accent:'#4a6a8a',bg1:'#0a1a2e',bg2:'#1a2e4e',layout:'circle'},
-  {name:'磚牆堡壘',frame:'#4a2a2a',accent:'#8a4a3a',bg1:'#2e0a0a',bg2:'#4e1a1a',layout:'brick'},
-  {name:'寬幅玻璃',frame:'#2a4a4a',accent:'#3a8a8a',bg1:'#0a2e2e',bg2:'#1a4e4e',layout:'wide'},
-  {name:'細長柱廊',frame:'#3a3a4a',accent:'#5a5a7a',bg1:'#0a0a1e',bg2:'#2a2a4e',layout:'tall'},
-  {name:'交錯拼貼',frame:'#4a4a2a',accent:'#7a7a3a',bg1:'#1e1e0a',bg2:'#3e3e1a',layout:'offset'},
-  {name:'迷你馬賽克',frame:'#3a2a3a',accent:'#6a4a6a',bg1:'#1a0a1a',bg2:'#2e1a2e',layout:'mini'},
-  {name:'霓虹未來',frame:'#1a0a3a',accent:'#cc44ff',bg1:'#0a0020',bg2:'#1a0040',layout:'mini'},
-  {name:'黃金帝國',frame:'#4a3a0a',accent:'#ffaa00',bg1:'#201000',bg2:'#3a2000',layout:'tall'},
-  {name:'碧海晴天',frame:'#0a2a3a',accent:'#00ccff',bg1:'#001020',bg2:'#002030',layout:'wide'},
-  {name:'赤炎要塞',frame:'#3a0a0a',accent:'#ff4400',bg1:'#200000',bg2:'#3a0000',layout:'brick'},
-  {name:'翡翠迷宮',frame:'#0a3a1a',accent:'#00ff88',bg1:'#001010',bg2:'#002020',layout:'hex'},
-  {name:'銀河前哨',frame:'#1a1a2a',accent:'#aaaaff',bg1:'#050510',bg2:'#0a0a20',layout:'circle'},
-  {name:'玫瑰晶宮',frame:'#3a0a2a',accent:'#ff66aa',bg1:'#200015',bg2:'#300025',layout:'diamond'},
-  {name:'極地堡壘',frame:'#2a3a4a',accent:'#88ccff',bg1:'#0a1520',bg2:'#102030',layout:'offset'},
-  {name:'熔岩紀念碑',frame:'#3a1a0a',accent:'#ff6600',bg1:'#1a0500',bg2:'#2a0a00',layout:'rect'},
-  {name:'幽靈塔樓',frame:'#1a1a2a',accent:'#88ff88',bg1:'#050508',bg2:'#0a0a12',layout:'tri'},
+  {name:'方格帷幕',nameEn:'Grid Curtain',frame:'#2a3a4a',accent:'#3a5a6a',bg1:'#0a0a2e',bg2:'#1a1a4e',layout:'rect'},
+  {name:'三角稜鏡',nameEn:'Triangular Prism',frame:'#3a2a4a',accent:'#6a3a7a',bg1:'#1a0a2e',bg2:'#2e1a4e',layout:'tri'},
+  {name:'蜂巢大樓',nameEn:'Honeycomb Plaza',frame:'#2a4a3a',accent:'#3a7a5a',bg1:'#0a2e1a',bg2:'#1a4e2e',layout:'hex'},
+  {name:'菱形水晶',nameEn:'Diamond Crystal',frame:'#4a3a2a',accent:'#7a5a3a',bg1:'#2e1a0a',bg2:'#4e2e1a',layout:'diamond'},
+  {name:'圓形泡泡',nameEn:'Circular Bubble',frame:'#2a3a4a',accent:'#4a6a8a',bg1:'#0a1a2e',bg2:'#1a2e4e',layout:'circle'},
+  {name:'磚牆堡壘',nameEn:'Brick Fortress',frame:'#4a2a2a',accent:'#8a4a3a',bg1:'#2e0a0a',bg2:'#4e1a1a',layout:'brick'},
+  {name:'寬幅玻璃',nameEn:'Wide Glazing',frame:'#2a4a4a',accent:'#3a8a8a',bg1:'#0a2e2e',bg2:'#1a4e4e',layout:'wide'},
+  {name:'細長柱廊',nameEn:'Slender Colonnade',frame:'#3a3a4a',accent:'#5a5a7a',bg1:'#0a0a1e',bg2:'#2a2a4e',layout:'tall'},
+  {name:'交錯拼貼',nameEn:'Offset Collage',frame:'#4a4a2a',accent:'#7a7a3a',bg1:'#1e1e0a',bg2:'#3e3e1a',layout:'offset'},
+  {name:'迷你馬賽克',nameEn:'Mini Mosaic',frame:'#3a2a3a',accent:'#6a4a6a',bg1:'#1a0a1a',bg2:'#2e1a2e',layout:'mini'},
+  {name:'霓虹未來',nameEn:'Neon Future',frame:'#1a0a3a',accent:'#cc44ff',bg1:'#0a0020',bg2:'#1a0040',layout:'mini'},
+  {name:'黃金帝國',nameEn:'Golden Empire',frame:'#4a3a0a',accent:'#ffaa00',bg1:'#201000',bg2:'#3a2000',layout:'tall'},
+  {name:'碧海晴天',nameEn:'Azure Sky',frame:'#0a2a3a',accent:'#00ccff',bg1:'#001020',bg2:'#002030',layout:'wide'},
+  {name:'赤炎要塞',nameEn:'Crimson Citadel',frame:'#3a0a0a',accent:'#ff4400',bg1:'#200000',bg2:'#3a0000',layout:'brick'},
+  {name:'翡翠迷宮',nameEn:'Emerald Labyrinth',frame:'#0a3a1a',accent:'#00ff88',bg1:'#001010',bg2:'#002020',layout:'hex'},
+  {name:'銀河前哨',nameEn:'Galaxy Outpost',frame:'#1a1a2a',accent:'#aaaaff',bg1:'#050510',bg2:'#0a0a20',layout:'circle'},
+  {name:'玫瑰晶宮',nameEn:'Rose Quartz Palace',frame:'#3a0a2a',accent:'#ff66aa',bg1:'#200015',bg2:'#300025',layout:'diamond'},
+  {name:'極地堡壘',nameEn:'Arctic Citadel',frame:'#2a3a4a',accent:'#88ccff',bg1:'#0a1520',bg2:'#102030',layout:'offset'},
+  {name:'熔岩紀念碑',nameEn:'Lava Monument',frame:'#3a1a0a',accent:'#ff6600',bg1:'#1a0500',bg2-->
+  {name:'幽靈塔樓',nameEn:'Phantom Tower',frame:'#1a1a2a',accent:'#88ff88',bg1:'#050508',bg2:'#0a0a12',layout:'tri'},
 ];
 
 // ===== GLASS =====
@@ -490,7 +746,9 @@ function buildBuilding(){
     glasses[idx].item={emoji:'🌟',name:'全爆碎片',desc:`碎片`,isNukeShard:true,action:()=>[]};
   }
   updateHUD();
-  document.getElementById('tool-bar').textContent=`🏢 ${style.name}　🪨 點擊砸玻璃`;
+  const t = i18n[currentLang];
+  const bName = currentLang === 'zh' ? style.name : (style.nameEn || style.name);
+  document.getElementById('tool-bar').textContent=t.toolbarBldg.replace('{bldgName}', bName);
 }
 
 // ===== DRAWING =====
@@ -587,19 +845,21 @@ function drawScene(time){
 // ===== HUD =====
 function updateHUD(){
   const total=glasses.length,broken=glasses.filter(g=>g.broken).length;
-  document.getElementById('hs').textContent=`🪟 ${broken}/${total}`;
-  document.getElementById('hp').textContent=`分數 ${score}`;
-  document.getElementById('hr').textContent=`第 ${round} 棟`;
-  document.getElementById('hb').textContent=`🏆 ${highScore}`;
+  const t = i18n[currentLang];
+  document.getElementById('hs').textContent=t.hudGlass.replace('{broken}', broken).replace('{total}', total);
+  document.getElementById('hp').textContent=t.hudScore.replace('{score}', score);
+  document.getElementById('hr').textContent=t.hudRound.replace('{round}', round);
+  document.getElementById('hb').textContent=t.hudHighScore.replace('{highScore}', highScore);
 }
 
 function updateShardDisplay(){
   const el=document.getElementById('shard-display');
+  const t = i18n[currentLang];
   if(nukeShards>0&&nukeShards<NUKE_NEED){
-    el.textContent=`🌟 碎片 ${nukeShards}/${NUKE_NEED}`;
+    el.textContent=t.shardProgress.replace('{shards}', nukeShards).replace('{need}', NUKE_NEED);
     el.style.opacity='1';
   }else if(nukeShards>=NUKE_NEED){
-    el.textContent=`🌟 全爆就緒！`;
+    el.textContent=t.shardReady;
     el.style.opacity='1';
   }else{
     el.style.opacity='0';
@@ -608,7 +868,8 @@ function updateShardDisplay(){
 
 function showItemToast(item){
   const el=document.getElementById('item-toast');
-  el.textContent=`${item.emoji} ${item.name}！${item.desc}`;
+  const info = getItemInfo(item);
+  el.textContent=`${item.emoji} ${info.name}！${info.desc}`;
   el.style.opacity='1';
   setTimeout(()=>{el.style.opacity='0';},1300);
 }
@@ -771,9 +1032,10 @@ function showMenu(){
   gameState='menu';
   highScore=parseInt(localStorage.getItem('glassHighScore')||'0');
   buildBuilding();
-  showMsg('🏢 砸玻璃大挑戰',
-    '點擊玻璃，砸碎整棟大樓！\n\n🪨 點擊玻璃直接砸碎（多指同時支援）\n💣🔨⚡🌊☄️ 隱藏道具一次砸一大片\n🌟 集滿 5 個全爆碎片 → 手動引爆！\n✨ 連擊 15 次自動引爆 COMBO 炸彈！\n🏗️ 20 種 3D 大樓造型，越後期越多塊！\n\n🏆 最高分：'+(highScore||0),
-    [{l:'開始砸！',a:startGame}]);
+  const t = i18n[currentLang];
+  showMsg(t.menuTitle,
+    t.menuDesc.replace('{highScore}', highScore || 0),
+    [{l:t.menuBtn,a:startGame}]);
 }
 </script>
 <script>
@@ -823,7 +1085,6 @@ function loop(time){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-showMenu();
 
 // ===== SERVICE WORKER =====
 if('serviceWorker' in navigator){
@@ -885,24 +1146,53 @@ async function fetchTopScores(){
   }catch{return[];}
 }
 
-function showLeaderboard(userRank, onClose){
+function showLeaderboard(userRank, shareScore, shareRound, onClose){
   const modal=document.getElementById('lb-modal');
   const statusEl=document.getElementById('lb-status');
   const listEl=document.getElementById('lb-list');
+  const shareBtn=document.getElementById('lb-share-btn');
+  const shareToast=document.getElementById('lb-share-toast');
+  const t = i18n[currentLang];
   modal.classList.remove('hidden');
-  statusEl.textContent=userRank?`✨ 你的本次排名：第 ${userRank} 名！`:'';
-  listEl.innerHTML='<li style="justify-content:center;color:#666;padding:16px 0">載入中...</li>';
+  statusEl.textContent=userRank?t.lbRankMsg.replace('{rank}', userRank):'';
+  shareToast.style.opacity='0';
+  shareToast.textContent='';
+  if(shareScore!=null){
+    shareBtn.classList.remove('hidden');
+    shareBtn.onclick=()=>{
+      const rankPart=userRank?t.shareRankText.replace('{rank}', userRank):t.shareRankChallenge;
+      const text=t.shareText.replace('{round}', shareRound).replace('{score}', shareScore.toLocaleString()).replace('{rankText}', rankPart);
+      const isTouchDevice=window.matchMedia('(pointer:coarse)').matches;
+      if(isTouchDevice&&navigator.share){
+        navigator.share({text}).catch(()=>{});
+      }else{
+        navigator.clipboard.writeText(text).then(()=>{
+          shareToast.textContent=t.shareCopied;
+          shareToast.style.opacity='1';
+          setTimeout(()=>{shareToast.style.opacity='0';},2500);
+        }).catch(()=>{
+          shareToast.textContent=t.shareManual;
+          shareToast.style.opacity='1';
+          setTimeout(()=>{shareToast.style.opacity='0';},2500);
+        });
+      }
+    };
+  }else{
+    shareBtn.classList.add('hidden');
+  }
+  listEl.innerHTML=`<li style="justify-content:center;color:#666;padding:16px 0">${t.lbLoading}</li>`;
   fetchTopScores().then(data=>{
     listEl.innerHTML='';
     if(!data.length){
-      listEl.innerHTML='<li style="justify-content:center;color:#666;padding:16px 0">尚無紀錄，快成為第一名！</li>';
+      listEl.innerHTML=`<li style="justify-content:center;color:#666;padding:16px 0">${t.lbEmpty}</li>`;
       return;
     }
     const medals=['🥇','🥈','🥉'];
     data.forEach((row,i)=>{
       const li=document.createElement('li');
       if(i<3)li.className=`top-${i+1}`;
-      li.innerHTML=`<span class="lb-rank">${medals[i]||(i+1)}</span><span class="lb-name">${escapeHtml(row.name)}</span><span class="lb-score">${Number(row.score).toLocaleString()}</span><span class="lb-round">第${row.round}棟</span>`;
+      const bldgLabel = t.lbBldg.replace('{round}', row.round);
+      li.innerHTML=`<span class="lb-rank">${medals[i]||(i+1)}</span><span class="lb-name">${escapeHtml(row.name)}</span><span class="lb-score">${Number(row.score).toLocaleString()}</span><span class="lb-round">${bldgLabel}</span>`;
       listEl.appendChild(li);
     });
   });
@@ -918,20 +1208,27 @@ function onRoundComplete(bonusLabel){
   updateHUD();
   const currentScore=score;
   const currentRound=round-1;
-  const titleText=`🏗️ 第 ${currentRound} 棟大樓已拆除！`;
-  const bodyText=`${bonusLabel?bonusLabel+'\n':''}分數：${currentScore.toLocaleString()}\n最高分：${highScore.toLocaleString()}\n準備下一棟...`;
+  const t = i18n[currentLang];
+  const bonusText = bonusLabel ? (bonusLabel === '全爆加分！' ? t.allClearBonus : bonusLabel) + '\n' : '';
+  const titleText = t.winTitle.replace('{round}', currentRound);
+  const bodyText = t.winDesc.replace('{bonus}', bonusText).replace('{score}', currentScore.toLocaleString()).replace('{highScore}', highScore.toLocaleString());
   showMsg(titleText,bodyText,[
-    {l:'繼續拆！',a:()=>{buildBuilding();gameState='playing';}},
-    {l:'🏆 排行榜',a:()=>{
+    {l:t.winKeepSmashing,a:()=>{buildBuilding();gameState='playing';}},
+    {l:t.winLeaderboard,a:()=>{
       getOrAskNickname(name=>{
         submitScore(name,currentScore,currentRound).then(rank=>{
-          showLeaderboard(rank,()=>{buildBuilding();gameState='playing';});
+          showLeaderboard(rank,currentScore,currentRound,()=>{buildBuilding();gameState='playing';});
         });
       });
     },cls:'lb-btn'}
   ]);
   gameState='done';
 }
+
+// ===== INITIAL LANGUAGE DELEGATE IN MAIN LOOP =====
+// Replace showMenu() at the initial execution with updateLanguage()
+// to trigger the static translation setup properly
+updateLanguage();
 </script>
 </body>
 </html>
