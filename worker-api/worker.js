@@ -1,11 +1,10 @@
 // glass-smash-api Worker
 // 部署方式：Cloudflare Dashboard → Workers → 貼上此檔案
 
-const ALLOWED_ORIGINS = ['https://glass-smash.pages.dev'];
-
 function isAllowedOrigin(origin) {
   if (!origin) return false;
-  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (origin === 'https://glass-smash.pages.dev') return true;
+  if (/^https:\/\/(.*\.)?ating123\.com$/.test(origin)) return true;
   if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return true;
   return false;
 }

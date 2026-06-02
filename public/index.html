@@ -355,7 +355,24 @@ const i18n = {
   }
 };
 
-let currentLang = localStorage.getItem('ating_portal_lang') || 'zh';
+function getInitialLanguage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const langParam = urlParams.get('lang') || urlParams.get('locale');
+  if (langParam) {
+    const clean = langParam.toLowerCase();
+    if (clean.startsWith('zh')) return 'zh';
+    if (clean.startsWith('en')) return 'en';
+  }
+  const match = document.cookie.match(new RegExp('(^| )ating_portal_lang=([^;]+)'));
+  if (match) {
+    const cookieVal = match[2].trim();
+    if (cookieVal === 'zh' || cookieVal === 'en') return cookieVal;
+  }
+  const localVal = localStorage.getItem('ating_portal_lang');
+  if (localVal === 'zh' || localVal === 'en') return localVal;
+  return 'zh';
+}
+let currentLang = getInitialLanguage();
 
 function updateSEO() {
   const t = i18n[currentLang];
@@ -414,6 +431,7 @@ function updateLanguage() {
 function toggleLanguage() {
   currentLang = currentLang === 'zh' ? 'en' : 'zh';
   localStorage.setItem('ating_portal_lang', currentLang);
+  document.cookie = `ating_portal_lang=${currentLang}; domain=.ating123.com; path=/; max-age=31536000`;
   updateLanguage();
 }
 
@@ -1038,7 +1056,7 @@ function showMenu(){
     t.menuDesc.replace('{highScore}', highScore || 0),
     [
       {l:t.menuBtn,a:startGame},
-      {l:t.winLeaderboard,a:()=>{showLeaderboard();},cls:'lb-btn'}
+      {l:t.winLeaderboard,a:()=>{showLeaderboard(null, null, null, showMenu);},cls:'lb-btn'}
     ]);
 }
 </script>
@@ -1060,12 +1078,20 @@ canvas.addEventListener('touchend',e=>{e.preventDefault();},{passive:false});
 document.getElementById('hb').addEventListener('click',e=>{
   e.stopPropagation();
   initAudio();
-  showLeaderboard();
+  if (gameState === 'menu') {
+    showLeaderboard(null, null, null, showMenu);
+  } else {
+    showLeaderboard();
+  }
 });
 document.getElementById('hb').addEventListener('touchstart',e=>{
   e.stopPropagation();
   initAudio();
-  showLeaderboard();
+  if (gameState === 'menu') {
+    showLeaderboard(null, null, null, showMenu);
+  } else {
+    showLeaderboard();
+  }
 });
 
 // ===== CROSSHAIR =====
