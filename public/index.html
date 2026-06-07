@@ -1394,13 +1394,42 @@ function showLeaderboard(userRank, shareScore, shareRound, onClose){
       return;
     }
     const medals=['🥇','🥈','🥉'];
-    data.forEach((row,i)=>{
+    const top5 = data.slice(0, 5);
+    let userRendered = false;
+    const currentNickname = localStorage.getItem('glass-smash-nick') || '';
+    
+    top5.forEach((row,i)=>{
       const li=document.createElement('li');
       if(i<3)li.className=`top-${i+1}`;
-      const bldgLabel = t.lbBldg.replace('{round}', row.round);
-      li.innerHTML=`<span class="lb-rank">${medals[i]||(i+1)}</span><span class="lb-name">${escapeHtml(row.name)}</span><span class="lb-score">${Number(row.score).toLocaleString()}</span><span class="lb-round">${bldgLabel}</span>`;
+      
+      const isCurrentUser = currentNickname && row.name === currentNickname && Number(row.score) === shareScore;
+      if(isCurrentUser) {
+        li.style.background = 'rgba(129, 212, 250, 0.15)';
+        li.style.border = '1px solid rgba(119, 221, 255, 0.4)';
+        li.style.borderRadius = '8px';
+        userRendered = true;
+      }
+      
+      li.innerHTML=`<span class="lb-rank">${medals[i]||(i+1)}</span><span class="lb-name">${escapeHtml(row.name)}</span><span class="lb-score">${Number(row.score).toLocaleString()}</span>`;
       listEl.appendChild(li);
     });
+    
+    if(userRank && shareScore != null && !userRendered) {
+      const divider=document.createElement('li');
+      divider.style.justifyContent='center';
+      divider.style.color='#444';
+      divider.style.padding='2px 0';
+      divider.style.fontSize='10px';
+      divider.innerHTML='•••';
+      listEl.appendChild(divider);
+      
+      const userLi=document.createElement('li');
+      userLi.style.background='rgba(119, 221, 255, 0.1)';
+      userLi.style.border='1px dashed rgba(119, 221, 255, 0.3)';
+      userLi.style.borderRadius='8px';
+      userLi.innerHTML=`<span class="lb-rank">${userRank}</span><span class="lb-name" style="color:#7df">${escapeHtml(currentNickname || 'You')}</span><span class="lb-score" style="color:#7df">${Number(shareScore).toLocaleString()}</span>`;
+      listEl.appendChild(userLi);
+    }
   });
   document.getElementById('lb-close-btn').onclick=()=>{
     modal.classList.add('hidden');
