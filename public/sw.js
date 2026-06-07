@@ -1,4 +1,4 @@
-const CACHE_NAME = 'glass-smash-v8'; // bump to force cache refresh
+const CACHE_NAME = 'glass-smash-v9'; // bump to force cache refresh
 const PRECACHE = [
   '/',
   '/index.html',
